@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Canine Farming</title>
+  
+  <!-- Lagos Life SDK -->
+  <script src="https://lagoslife.app/sdk/vatar-games-v1.js"></script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(180deg, #0a1f1a, #05120f);
+      color: #e8e8e8;
+      min-height: 100dvh;
+      padding: 16px;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      padding: 24px 16px;
+      background: linear-gradient(135deg, #0f2e24, #1a3f32);
+      border-radius: 20px;
+      margin-bottom: 20px;
+      border: 1px solid #1f5c4a;
+    }
+
+    .header h1 {
+color: #f4c95d;
+      font-size: 1.8rem;
+      margin-bottom: 6px;
+      letter-spacing: 1px;
+    }
+
+    .header p {
+      color: #a8c5b8;
+      font-size: 0.95rem;
+    }
+
+    .card {
+      background: #112d26;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 1<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Canine Farming</title>
+  
+  <!-- Lagos Life SDK -->
+  <script src="https://lagoslife.app/sdk/vatar-games-v1.js"></script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(180deg, #0a1f1a, #05120f);
+      color: #e8e8e8;
+      min-height: 100dvh;
+      padding: 16px;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      padding: 24px 16px;
+      background: linear-gradient(135deg, #0f2e24, #1a3f32);
+      border-radius: 20px;
+      margin-bottom: 20px;
+      border: 1px solid #1f5c4a;
+    }
+
+    .header h1 {
+      color: #f4c95d;
+      font-size: 1.8rem;
+      margin-bottom: 6px;
+      letter-spacing: 1px;
+    }
+
+    .header p {
+      color: #a8c5b8;
+      font-size: 0.95rem;
+    }
+
+    .card {
+      background: #112d26;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+      border: 1px solid #1f5c4a;
+    }
+
+    .player-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #1f5c4a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+    }
+
+    .naira {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #f4c95d;
+    }
+
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 14px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-top: 12px;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: linear-gradient(90deg, #f4c95d, #d4a017);
+      color: #0a1f1a;
+    }
+
+    .btn-secondary {
+      background: #1f5c4a;
+      color: white;
+    }
+
+    .status {
+      text-align: center;
+      padding: 12px;
+      color: #8ab9a8;
+      font-size: 0.95rem;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>CANINE FARMING</h1>
+      <p>Raise & Breed German Shepherds</p>
+    </div>
+
+    <div class="card" id="loadingCard">
+      <div class="status">Connecting to Lagos Life...</div>
+    </div>
+
+    <div class="card hidden" id="mainCard">
+      <div class="player-info">
+        <div class="avatar" id="playerAvatar">🐕</div>
+        <div>
+          <div id="playerName">Player</div>
+          <div class="naira" id="playerNaira">₦0</div>
+        </div>
+      </div>
+
+      <div id="gameArea">
+        <p class="status" id="statusText">Welcome to your compound!</p>
+        
+        <button class="btn btn-primary" id="buyDogBtn">
+          Buy First Dog (Local Bloodline)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // We will expand this script step by step
+    let player = null;
+    let session = null;
+
+    async function initGame() {
+      try {
+        const result = await Vatar.init();
+        player = result.player;
+        session = result.session;
+
+        document.getElementById('loadingCard').classList.add('hidden');
+        document.getElementById('mainCard').classList.remove('hidden');
+
+        document.getElementById('playerName').textContent = player.name || 'Pioneer';
+        
+        // For now we show a placeholder. Later we will load real Naira balance.
+        document.getElementById('playerNaira').textContent = '₦ Loading...';
+
+        console.log('Lagos Life connected:', player);
+      } catch (err) {
+        document.getElementById('loadingCard').innerHTML = 
+          `<div class="status" style="color:#ff6b6b">Failed to connect: ${err.message || err}</div>`;
+        console.error(err);
+      }
+    }
+
+    // Start the game
+    initGame();
+  </script>
+</body>
+</html>￼Enter6px;
+      border: 1px solid #1f5c4a;
+    }
+
+    .player-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #1f5c4a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+    }
+
+    .naira {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #f4c95d;
+    }
+
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 14px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-top: 12px;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: linear-gradient(90deg, #f4c95d, #d4a017);
+      color: #0a1f1a;
+    }
+
+    .btn-secondary {
+      background: #1f5c4a;
+      color: white;
+    }
+
+    .status {
+      text-align: center;
+      padding: 12px;
+      color: #8ab9a8;

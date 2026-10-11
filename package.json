@@ -1,0 +1,12 @@
+{
+  "name": "canine-farming-game",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "echo \"Static site - open index.html\"",
+    "build": "echo \"No build needed\""
+  },
+  "engines": {
+    "node": "24.x"
+  }
+}
