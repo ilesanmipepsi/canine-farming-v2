@@ -2,575 +2,257 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#071711">
-  <title>Canine Farming</title>
-
-  <!-- Lagos Life SDK. The game can still be tested if the SDK is unavailable. -->
-  <script src="https://lagoslife.app/sdk/vatar-games-v1.js"></script>
-
-  <style>
-    :root {
-      color-scheme: dark;
-      --bg: #071711;
-      --panel: #102b20;
-      --panel2: #18392b;
-      --border: #2a5b42;
-      --gold: #f4c95d;
-      --green: #65d49a;
-      --muted: #a7c3b2;
-      --red: #ff8585;
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      padding: 16px 14px 32px;
-      min-height: 100vh;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: radial-gradient(ellipse at top, #173d2b 0%, var(--bg) 65%);
-      color: #f4f7f4;
-      line-height: 1.5;
-    }
-
-    button, input, select { font: inherit; }
-    button { cursor: pointer; }
-    button:focus-visible, input:focus-visible, select:focus-visible {
-      outline: 3px solid var(--gold);
-      outline-offset: 3px;
-    }
-
-    .container { max-width: 520px; margin: auto; }
-
-    header {
-      text-align: center;
-      padding: 23px 14px;
-      border: 1px solid var(--border);
-      border-radius: 22px;
-      background: linear-gradient(145deg, #163b2a, #10271d);
-      margin-bottom: 16px;
-    }
-
-    .brand-icon { font-size: 2.5rem; }
-    h1 { color: var(--gold); font-size: 1.75rem; margin: 4px 0; letter-spacing: 1px; }
-    header p { margin: 0; color: var(--muted); font-size: .94rem; }
-    .eyebrow { color: var(--green); text-transform: uppercase; letter-spacing: 1.5px; font-size: .72rem; font-weight: 800; }
-
-    .card {
-      background: rgba(16, 43, 32, .96);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 18px;
-      margin-bottom: 14px;
-      box-shadow: 0 8px 24px rgba(0,0,0,.12);
-    }
-
-    h2 { font-size: 1.12rem; margin: 0 0 12px; }
-    h3 { font-size: 1rem; margin: 0 0 6px; }
-    p { margin-top: 5px; }
-    .muted { color: var(--muted); font-size: .88rem; }
-    .gold { color: var(--gold); }
-    .hidden { display: none !important; }
-
-    label { display: block; margin: 14px 0 6px; font-size: .9rem; font-weight: 650; }
-    input, select {
-      width: 100%;
-      min-height: 48px;
-      border: 1px solid #3c6a51;
-      border-radius: 11px;
-      background: #091c13;
-      color: white;
-      padding: 11px 12px;
-    }
-
-    .btn {
-      display: block;
-      width: 100%;
-      min-height: 48px;
-      padding: 12px 15px;
-      border: 0;
-      border-radius: 12px;
-      margin-top: 11px;
-      font-weight: 750;
-      transition: transform .12s ease, opacity .12s ease;
-    }
-
-    .btn:active { transform: scale(.99); }
-    .btn:disabled { opacity: .45; cursor: not-allowed; }
-    .primary { background: linear-gradient(100deg, #f4d36c, #dcae31); color: #102016; }
-    .secondary { background: #28583f; color: white; border: 1px solid #427756; }
-    .quiet { background: transparent; color: var(--muted); border: 1px solid #355c46; }
-    .danger { color: var(--red); }
-    .status { padding: 10px 12px; border-radius: 10px; background: #0a2016; color: var(--muted); font-size: .88rem; }
-    .notice { margin-bottom: 14px; }
-    .wallet { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-    .wallet-label { color: var(--muted); font-size: .83rem; }
-    .balance { color: var(--gold); font-size: 1.65rem; font-weight: 850; overflow-wrap: anywhere; }
-    .pill { display: inline-block; border: 1px solid #3d7655; background: #193c2b; border-radius: 99px; padding: 4px 9px; font-size: .75rem; color: #c8efd7; }
-    .dog-portrait { text-align: center; background: linear-gradient(150deg, #1a432e, #0c2117); border: 1px solid #315c40; border-radius: 15px; padding: 18px 12px; margin-bottom: 14px; }
-    .dog-emoji { font-size: 4rem; line-height: 1.3; }
-    .dog-name { font-size: 1.3rem; font-weight: 850; color: var(--gold); }
-    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .stat { background: #0a2116; border-radius: 12px; padding: 11px; min-width: 0; }
-    .stat-top { display: flex; justify-content: space-between; gap: 5px; font-size: .82rem; margin-bottom: 7px; }
-    .track { height: 9px; background: #294637; border-radius: 20px; overflow: hidden; }
-    .fill { height: 100%; width: 50%; border-radius: inherit; background: var(--green); transition: width .2s ease; }
-    .fill.low { background: #f0bd4d; }
-    .fill.critical { background: #ef7676; }
-    .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
-    .action-grid .btn { margin: 0; padding: 12px 7px; }
-    .small { font-size: .78rem; font-weight: 500; display: block; opacity: .85; }
-    .divider { height: 1px; background: #294a36; margin: 14px 0; }
-    footer { text-align: center; color: #86a795; font-size: .78rem; padding: 10px; }
-    #toast { position: sticky; bottom: 10px; z-index: 5; margin-top: 12px; }
-    .log-item { padding: 9px 0; border-bottom: 1px solid #284735; font-size: .86rem; }
-    .log-item:last-child { border-bottom: 0; }
-
-    @media (max-width: 360px) {
-      body { padding: 10px 8px 24px; }
-      .card { padding: 14px; }
-      .balance { font-size: 1.35rem; }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#071711">
+<title>Canine Farming</title>
+<style>
+:root{color-scheme:dark;--bg:#071711;--panel:#102b20;--border:#2a5b42;--gold:#f4c95d;--green:#65d49a;--muted:#a7c3b2;--red:#ff8585}
+*{box-sizing:border-box}
+body{margin:0;padding:16px 14px 32px;min-height:100vh;font-family:system-ui,-apple-system,sans-serif;background:radial-gradient(ellipse at top,#173d2b 0%,var(--bg) 65%);color:#f4f7f4;line-height:1.5}
+button,input,select{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.container{max-width:560px;margin:auto}
+header{text-align:center;padding:23px 14px;border:1px solid var(--border);border-radius:22px;background:linear-gradient(145deg,#163b2a,#10271d);margin-bottom:16px}
+.brand-icon{font-size:2.5rem}h1{color:var(--gold);font-size:1.75rem;margin:4px 0;letter-spacing:1px}header p{margin:0;color:var(--muted);font-size:.94rem}
+.eyebrow{color:var(--green);text-transform:uppercase;letter-spacing:1.5px;font-size:.72rem;font-weight:800}
+.card{background:rgba(16,43,32,.96);border:1px solid var(--border);border-radius:18px;padding:18px;margin-bottom:14px;box-shadow:0 8px 24px #0002}
+h2{font-size:1.12rem;margin:0 0 12px}h3{font-size:1rem;margin:0 0 6px}p{margin-top:5px}.muted{color:var(--muted);font-size:.88rem}.gold{color:var(--gold)}.hidden{display:none!important}
+label{display:block;margin:14px 0 6px;font-size:.9rem;font-weight:650}
+input,select{width:100%;min-height:48px;border:1px solid #3c6a51;border-radius:11px;background:#091c13;color:white;padding:11px 12px}
+.btn{display:block;width:100%;min-height:48px;padding:12px 15px;border:0;border-radius:12px;margin-top:11px;font-weight:750;transition:transform .12s ease,opacity .12s ease}
+.btn:active{transform:scale(.99)}.btn:disabled{opacity:.45;cursor:not-allowed}
+.primary{background:linear-gradient(100deg,#f4d36c,#dcae31);color:#102016}.secondary{background:#28583f;color:white;border:1px solid #427756}.quiet{background:transparent;color:var(--muted);border:1px solid #355c46}
+.status{padding:10px 12px;border-radius:10px;background:#0a2016;color:var(--muted);font-size:.88rem}.notice{margin-bottom:14px}
+.wallet{display:flex;justify-content:space-between;align-items:center;gap:12px}.wallet-label{color:var(--muted);font-size:.83rem}.balance{color:var(--gold);font-size:1.65rem;font-weight:850;overflow-wrap:anywhere}
+.pill{display:inline-block;border:1px solid #3d7655;background:#193c2b;border-radius:99px;padding:4px 9px;font-size:.75rem;color:#c8efd7}
+.dog-portrait{text-align:center;background:linear-gradient(150deg,#1a432e,#0c2117);border:1px solid #315c40;border-radius:15px;padding:18px 12px;margin-bottom:14px}
+.dog-emoji{font-size:4rem;line-height:1.3}.dog-name{font-size:1.3rem;font-weight:850;color:var(--gold)}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}.stat{background:#0a2116;border-radius:12px;padding:11px;min-width:0}
+.stat-top{display:flex;justify-content:space-between;gap:5px;font-size:.82rem;margin-bottom:7px}.track{height:9px;background:#294637;border-radius:20px;overflow:hidden}
+.fill{height:100%;width:50%;border-radius:inherit;background:var(--green);transition:width .2s}.fill.low{background:#f0bd4d}.fill.critical{background:#ef7676}
+.action-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.action-grid .btn{margin:0;padding:12px 7px}.small{font-size:.78rem;font-weight:500;display:block;opacity:.85}
+.divider{height:1px;background:#294a36;margin:14px 0}footer{text-align:center;color:#86a795;font-size:.78rem;padding:10px}
+#toast{position:sticky;bottom:10px;z-index:5;margin-top:12px}.log-item{padding:9px 0;border-bottom:1px solid #284735;font-size:.86rem}.log-item:last-child{border-bottom:0}
+.job{background:#0a2116;border:1px solid #294a36;border-radius:13px;padding:13px;margin-top:10px}.job-head{display:flex;justify-content:space-between;gap:10px;align-items:start}.job-reward{color:var(--gold);font-weight:800;white-space:nowrap}.job .btn{margin-top:9px}
+@media(max-width:360px){body{padding:10px 8px 24px}.card{padding:14px}.balance{font-size:1.35rem}}
+</style>
 </head>
-
 <body>
-  <main class="container">
-    <header>
-      <div class="brand-icon" aria-hidden="true">🐕</div>
-      <div class="eyebrow">Your journey begins here</div>
-      <h1>CANINE FARMING</h1>
-      <p>Raise, care for and breed German Shepherds</p>
-    </header>
+<main class="container">
+<header>
+<div class="brand-icon" aria-hidden="true">🐕</div>
+<div class="eyebrow">Your journey begins here</div>
+<h1>CANINE FARMING</h1>
+<p>Raise, care for and breed German Shepherds</p>
+</header>
+<div id="notice" class="status notice" role="status">Starting your compound...</div>
 
-    <div id="notice" class="status notice" role="status">
-      Starting your compound...
-    </div>
+<section id="setupScreen" class="card hidden">
+<div class="eyebrow">New breeder registration</div>
+<h2>Build your future</h2>
+<p class="muted">Choose your identity and permanent home state. Your starting wallet can buy one Local German Shepherd.</p>
+<form id="setupForm">
+<label for="breederName">Breeder name</label>
+<input id="breederName" maxlength="24" placeholder="Enter your breeder name" required autocomplete="nickname">
+<label for="stateSelect">Permanent home state</label>
+<select id="stateSelect" required>
+<option value="">Choose your state</option>
+<option>Abia</option><option>Adamawa</option><option>Akwa Ibom</option><option>Anambra</option><option>Bauchi</option><option>Bayelsa</option><option>Benue</option><option>Borno</option><option>Cross River</option><option>Delta</option><option>Ebonyi</option><option>Edo</option><option>Ekiti</option><option>Enugu</option><option>Gombe</option><option>Imo</option><option>Jigawa</option><option>Kaduna</option><option>Kano</option><option>Katsina</option><option>Kebbi</option><option>Kogi</option><option>Kwara</option><option>Lagos</option><option>Nasarawa</option><option>Niger</option><option>Ogun</option><option>Ondo</option><option>Osun</option><option>Oyo</option><option>Plateau</option><option>Rivers</option><option>Sokoto</option><option>Taraba</option><option>Yobe</option><option>Zamfara</option><option>Federal Capital Territory (Abuja)</option>
+</select>
+<label for="dogGender">First dog's gender</label>
+<select id="dogGender" required><option value="Female">Female</option><option value="Male">Male</option></select>
+<div class="status" style="margin-top:14px">Starting wallet: <strong class="gold">700 CFC</strong><br>First Local German Shepherd: <strong>500 CFC</strong></div>
+<button class="btn primary" type="submit">Establish My Compound</button>
+</form>
+</section>
 
-    <section id="setupScreen" class="card hidden">
-      <div class="eyebrow">New breeder registration</div>
-      <h2>Build your future</h2>
-      <p class="muted">Choose your identity and your permanent home state. You start with enough CFC to buy one Local German Shepherd.</p>
+<div id="gameScreen" class="hidden">
+<section class="card">
+<div class="wallet"><div><div class="wallet-label">BREEDER WALLET</div><div id="walletBalance" class="balance">700 CFC</div></div><div style="text-align:right"><div style="font-size:2rem">🏡</div><strong id="playerName">Pioneer</strong><div id="playerState" class="muted">Nigeria</div></div></div>
+</section>
 
-      <form id="setupForm">
-        <label for="breederName">Breeder name</label>
-        <input id="breederName" name="breederName" maxlength="24" placeholder="Enter your breeder name" required autocomplete="nickname">
+<section id="purchaseCard" class="card">
+<div class="eyebrow">First investment</div><h2>Welcome to your compound</h2>
+<p>Your journey starts with one Local bloodline German Shepherd. Care for your dog and build your reputation.</p>
+<div class="dog-portrait"><div class="dog-emoji">🐕</div><h3>Local German Shepherd</h3><span class="pill">LOCAL BLOODLINE</span><p class="muted">A hardworking beginning for a future breeding programme.</p><div class="balance" style="font-size:1.25rem">500 CFC</div></div>
+<button id="buyDogBtn" class="btn primary" type="button">Buy My First Dog · 500 CFC</button>
+</section>
 
-        <label for="stateSelect">Permanent home state</label>
-        <select id="stateSelect" name="stateSelect" required>
-          <option value="">Choose your state</option>
-          <option>Abia</option><option>Adamawa</option><option>Akwa Ibom</option>
-          <option>Anambra</option><option>Bauchi</option><option>Bayelsa</option>
-          <option>Benue</option><option>Borno</option><option>Cross River</option>
-          <option>Delta</option><option>Ebonyi</option><option>Edo</option>
-          <option>Ekiti</option><option>Enugu</option><option>Gombe</option>
-          <option>Imo</option><option>Jigawa</option><option>Kaduna</option>
-          <option>Kano</option><option>Katsina</option><option>Kebbi</option>
-          <option>Kogi</option><option>Kwara</option><option>Lagos</option>
-          <option>Nasarawa</option><option>Niger</option><option>Ogun</option>
-          <option>Ondo</option><option>Osun</option><option>Oyo</option>
-          <option>Plateau</option><option>Rivers</option><option>Sokoto</option>
-          <option>Taraba</option><option>Yobe</option><option>Zamfara</option>
-          <option>Federal Capital Territory (Abuja)</option>
-        </select>
+<section id="dogCard" class="card hidden">
+<div class="eyebrow">Your compound</div>
+<div class="dog-portrait"><div class="dog-emoji">🐕</div><div id="dogName" class="dog-name">Shepherd</div><p id="dogDetails" class="muted">Local bloodline · Female</p><span class="pill">YOUR FIRST DOG</span></div>
+<div class="stats">
+<div class="stat"><div class="stat-top"><span>❤️ Health</span><strong id="healthText">100%</strong></div><div class="track"><div id="healthBar" class="fill"></div></div></div>
+<div class="stat"><div class="stat-top"><span>⚡ Energy</span><strong id="energyText">100%</strong></div><div class="track"><div id="energyBar" class="fill"></div></div></div>
+<div class="stat"><div class="stat-top"><span>🍖 Hunger</span><strong id="hungerText">10%</strong></div><div class="track"><div id="hungerBar" class="fill"></div></div></div>
+<div class="stat"><div class="stat-top"><span>😊 Temperament</span><strong id="temperText">70%</strong></div><div class="track"><div id="temperBar" class="fill"></div></div></div>
+</div>
+<div class="divider"></div><p id="dogStatus" class="status">Your dog is settling into the compound.</p>
+<h3 style="margin-top:16px">Daily care</h3><p class="muted">Feeding costs 25 CFC. Resting and playing are free.</p>
+<div class="action-grid">
+<button id="feedBtn" class="btn primary" type="button">🍖 Feed<span class="small">25 CFC</span></button>
+<button id="restBtn" class="btn secondary" type="button">😴 Rest<span class="small">Free</span></button>
+<button id="playBtn" class="btn secondary" type="button">🎾 Play<span class="small">Free</span></button>
+<button id="vetBtn" class="btn secondary" type="button">🩺 Basic check<span class="small">30 CFC</span></button>
+</div>
+</section>
 
-        <label for="dogGender">First dog's gender</label>
-        <select id="dogGender" name="dogGender" required>
-          <option value="Female">Female</option>
-          <option value="Male">Male</option>
-        </select>
+<section id="jobsCard" class="card">
+<div class="eyebrow">Earn your way</div><h2>💼 Jobs board</h2>
+<p class="muted">Take on local work to earn CFC for your compound. You can complete up to three jobs each game day. Your daily allowance refreshes on the next calendar day.</p>
+<div class="wallet"><div><div class="wallet-label">JOBS COMPLETED TODAY</div><strong id="jobsToday">0 / 3</strong></div><div style="text-align:right"><div class="wallet-label">EARNED TODAY</div><strong id="earnedToday" class="gold">0 CFC</strong></div></div>
+<div id="jobsList"></div>
+<div id="jobsNotice" class="status" style="margin-top:12px">Choose a job to get started.</div>
+</section>
 
-        <div class="status" style="margin-top:14px">
-          Starting wallet: <strong class="gold">700 CFC</strong><br>
-          First Local German Shepherd: <strong>500 CFC</strong>
-        </div>
-        <button class="btn primary" type="submit">Establish My Compound</button>
-      </form>
-    </section>
+<section class="card"><h2>📋 Breeder journal</h2><div id="journal"><p class="muted">Your story will appear here.</p></div></section>
+<section class="card"><h2>🏆 Your progress</h2>
+<div class="wallet"><div><div class="wallet-label">Dogs owned</div><strong id="dogCount">0</strong></div><div><div class="wallet-label">Care actions</div><strong id="careCount">0</strong></div><div><div class="wallet-label">Reputation</div><strong id="reputation">0</strong></div></div>
+<p class="muted" style="margin-bottom:0">Breeding, marketplace, transport and multiplayer will arrive in later milestones.</p></section>
+</div>
+<div id="toast" class="status hidden" role="status" aria-live="polite"></div>
+<footer>Canine Farming · Early prototype · CFC is fictional in-game currency.</footer>
+</main>
 
-    <div id="gameScreen" class="hidden">
-      <section class="card">
-        <div class="wallet">
-          <div>
-            <div class="wallet-label">BREEDER WALLET</div>
-            <div id="walletBalance" class="balance">700 CFC</div>
-          </div>
-          <div style="text-align:right">
-            <div id="playerAvatar" style="font-size:2rem">🏡</div>
-            <strong id="playerName">Pioneer</strong>
-            <div id="playerState" class="muted">Nigeria</div>
-          </div>
-        </div>
-      </section>
-
-      <section id="purchaseCard" class="card">
-        <div class="eyebrow">First investment</div>
-        <h2>Welcome to your compound</h2>
-        <p>Your journey starts with one Local bloodline German Shepherd. Care for your dog and build your breeding reputation.</p>
-        <div class="dog-portrait">
-          <div class="dog-emoji">🐕</div>
-          <h3>Local German Shepherd</h3>
-          <span class="pill">LOCAL BLOODLINE</span>
-          <p class="muted">A hardworking beginning for a future breeding programme.</p>
-          <div class="balance" style="font-size:1.25rem">500 CFC</div>
-        </div>
-        <button id="buyDogBtn" class="btn primary" type="button">Buy My First Dog · 500 CFC</button>
-      </section>
-
-      <section id="dogCard" class="card hidden">
-        <div class="eyebrow">Your compound</div>
-        <div class="dog-portrait">
-          <div class="dog-emoji">🐕</div>
-          <div id="dogName" class="dog-name">Your Shepherd</div>
-          <p id="dogDetails" class="muted">Local bloodline · Female</p>
-          <span class="pill">YOUR FIRST DOG</span>
-        </div>
-
-        <div class="stats">
-          <div class="stat">
-            <div class="stat-top"><span>❤️ Health</span><strong id="healthText">100%</strong></div>
-            <div class="track"><div id="healthBar" class="fill"></div></div>
-          </div>
-          <div class="stat">
-            <div class="stat-top"><span>⚡ Energy</span><strong id="energyText">100%</strong></div>
-            <div class="track"><div id="energyBar" class="fill"></div></div>
-          </div>
-          <div class="stat">
-            <div class="stat-top"><span>🍖 Hunger</span><strong id="hungerText">0%</strong></div>
-            <div class="track"><div id="hungerBar" class="fill"></div></div>
-          </div>
-          <div class="stat">
-            <div class="stat-top"><span>😊 Temperament</span><strong id="temperText">70%</strong></div>
-            <div class="track"><div id="temperBar" class="fill"></div></div>
-          </div>
-        </div>
-
-        <div class="divider"></div>
-        <p id="dogStatus" class="status">Your dog is settling into the compound.</p>
-        <h3 style="margin-top:16px">Daily care</h3>
-        <p class="muted">Feeding costs 25 CFC. Resting is free. Keep hunger low and health high.</p>
-        <div class="action-grid">
-          <button id="feedBtn" class="btn primary" type="button">🍖 Feed <span class="small">25 CFC</span></button>
-          <button id="restBtn" class="btn secondary" type="button">😴 Rest <span class="small">Free</span></button>
-          <button id="playBtn" class="btn secondary" type="button">🎾 Play <span class="small">Free</span></button>
-          <button id="vetBtn" class="btn secondary" type="button">🩺 Basic check <span class="small">30 CFC</span></button>
-        </div>
-      </section>
-
-      <section class="card">
-        <h2>📋 Breeder journal</h2>
-        <div id="journal"><p class="muted">Your story will appear here.</p></div>
-      </section>
-
-      <section class="card">
-        <h2>🏆 Your progress</h2>
-        <div class="wallet">
-          <div><div class="wallet-label">Dogs owned</div><strong id="dogCount">0</strong></div>
-          <div><div class="wallet-label">Care actions</div><strong id="careCount">0</strong></div>
-          <div><div class="wallet-label">Reputation</div><strong id="reputation">0</strong></div>
-        </div>
-        <p class="muted" style="margin-bottom:0">Breeding, jobs, marketplace, transport and multiplayer will arrive in later milestones.</p>
-      </section>
-    </div>
-
-    <div id="toast" class="status hidden" role="status" aria-live="polite"></div>
-    <footer>Canine Farming · Early prototype · All balances are fictional in-game CFC.</footer>
-  </main>
-
-  <script>
-    (() => {
-      "use strict";
-
-      const SAVE_KEY = "canineFarmingSaveV1";
-      const STARTING_CFC = 700;
-      const DOG_PRICE = 500;
-      const FEED_PRICE = 25;
-      const VET_PRICE = 30;
-
-      let game = null;
-      let sdkPlayer = null;
-      let saveAvailable = true;
-      let toastTimer = null;
-
-      const $ = (id) => document.getElementById(id);
-
-      function showToast(message, isError = false) {
-        const el = $("toast");
-        el.textContent = message;
-        el.style.color = isError ? "#ff8585" : "#c8efd7";
-        el.classList.remove("hidden");
-        if (toastTimer) clearTimeout(toastTimer);
-        toastTimer = setTimeout(() => el.classList.add("hidden"), 3600);
-      }
-
-      function saveGame() {
-        try {
-          localStorage.setItem(SAVE_KEY, JSON.stringify(game));
-          saveAvailable = true;
-          return true;
-        } catch (err) {
-          saveAvailable = false;
-          $("notice").textContent =
-            "Browser saving is unavailable. Keep this tab open to protect this test session.";
-          return false;
-        }
-      }
-
-      function loadGame() {
-        try {
-          const raw = localStorage.getItem(SAVE_KEY);
-          if (!raw) return null;
-          const parsed = JSON.parse(raw);
-          if (!parsed || parsed.version !== 1 ||
-              typeof parsed.cfc !== "number" ||
-              typeof parsed.breederName !== "string" ||
-              typeof parsed.homeState !== "string") return null;
-          return parsed;
-        } catch (err) {
-          return null;
-        }
-      }
-
-      function addJournal(message) {
-        game.journal = Array.isArray(game.journal) ? game.journal : [];
-        game.journal.unshift({
-          message,
-          time: new Date().toLocaleString()
-        });
-        game.journal = game.journal.slice(0, 8);
-      }
-
-      function setScreen() {
-        const setupNeeded = !game;
-        $("setupScreen").classList.toggle("hidden", !setupNeeded);
-        $("gameScreen").classList.toggle("hidden", setupNeeded);
-        if (!setupNeeded) render();
-      }
-
-      function startNewGame(event) {
-        event.preventDefault();
-        const name = $("breederName").value.trim().slice(0, 24);
-        const state = $("stateSelect").value;
-        const gender = $("dogGender").value;
-
-        if (!name || !state || !gender) {
-          showToast("Please complete all your breeder details.", true);
-          return;
-        }
-
-        game = {
-          version: 1,
-          breederName: name,
-          homeState: state,
-          cfc: STARTING_CFC,
-          dog: null,
-          careActions: 0,
-          reputation: 0,
-          journal: [],
-          createdAt: Date.now()
-        };
-
-        addJournal("Welcome, " + name + "! Your compound has been established in " + state + ".");
-        addJournal("Your starting wallet contains 700 CFC.");
-        saveGame();
-        setScreen();
-        $("notice").textContent = "Your compound is ready. Your home state is fixed for this save.";
-        showToast("Compound established. Welcome, breeder!");
-      }
-
-      function buyFirstDog() {
-        if (!game || game.dog) return;
-        if (game.cfc < DOG_PRICE) {
-          showToast("You need 500 CFC to buy your first dog.", true);
-          return;
-        }
-
-        game.cfc -= DOG_PRICE;
-        game.dog = {
-          name: "Shepherd",
-          gender: $("dogGender").value || "Female",
-          bloodline: "Local",
-          health: 100,
-          energy: 100,
-          hunger: 10,
-          temperament: 70,
-          bornAt: Date.now(),
-          lastCareAt: Date.now()
-        };
-
-        game.reputation += 1;
-        addJournal("You welcomed your first Local German Shepherd to the compound for 500 CFC.");
-        saveGame();
-        render();
-        showToast("Congratulations! Your first German Shepherd is home.");
-      }
-
-      function applyCare(action) {
-        if (!game || !game.dog) {
-          showToast("Buy your first dog before choosing a care action.", true);
-          return;
-        }
-
-        const dog = game.dog;
-
-        if (action === "feed") {
-          if (dog.hunger <= 0) {
-            showToast("Your dog is not hungry right now.");
-            return;
-          }
-          if (game.cfc < FEED_PRICE) {
-            showToast("Not enough CFC. Feeding costs 25 CFC.", true);
-            return;
-          }
-          game.cfc -= FEED_PRICE;
-          dog.hunger = Math.max(0, dog.hunger - 45);
-          dog.health = Math.min(100, dog.health + 3);
-          dog.temperament = Math.min(100, dog.temperament + 2);
-          addJournal("You fed your German Shepherd. Cost: 25 CFC.");
-        } else if (action === "rest") {
-          dog.energy = Math.min(100, dog.energy + 30);
-          dog.health = Math.min(100, dog.health + 2);
-          dog.hunger = Math.min(100, dog.hunger + 5);
-          addJournal("Your German Shepherd rested and recovered energy.");
-        } else if (action === "play") {
-          if (dog.energy < 15) {
-            showToast("Your dog needs more energy before playing.", true);
-            return;
-          }
-          dog.energy = Math.max(0, dog.energy - 15);
-          dog.hunger = Math.min(100, dog.hunger + 8);
-          dog.temperament = Math.min(100, dog.temperament + 8);
-          addJournal("You played with your dog. Its temperament improved.");
-        } else if (action === "vet") {
-          if (game.cfc < VET_PRICE) {
-            showToast("A basic health check costs 30 CFC.", true);
-            return;
-          }
-          game.cfc -= VET_PRICE;
-          dog.health = Math.min(100, dog.health + 15);
-          addJournal("A basic in-game health check improved your dog's health. Cost: 30 CFC.");
-        }
-
-        dog.lastCareAt = Date.now();
-        game.careActions += 1;
-        if (game.careActions % 3 === 0) game.reputation += 1;
-        saveGame();
-        render();
-        showToast("Care recorded. Your progress has been saved when browser storage is available.");
-      }
-
-      function updateStat(prefix, value) {
-        const safeValue = Math.max(0, Math.min(100, Math.round(value)));
-        $(prefix + "Text").textContent = safeValue + "%";
-        const bar = $(prefix + "Bar");
-        bar.style.width = safeValue + "%";
-        bar.classList.toggle("low", safeValue <= 45 && safeValue > 20);
-        bar.classList.toggle("critical", safeValue <= 20);
-      }
-
-      function renderJournal() {
-        const journal = $("journal");
-        journal.replaceChildren();
-        if (!game.journal || game.journal.length === 0) {
-          const empty = document.createElement("p");
-          empty.className = "muted";
-          empty.textContent = "Your story will appear here.";
-          journal.appendChild(empty);
-          return;
-        }
-
-        game.journal.forEach((entry) => {
-          const item = document.createElement("div");
-          item.className = "log-item";
-          const message = document.createElement("div");
-          message.textContent = entry.message;
-          const time = document.createElement("div");
-          time.className = "muted";
-          time.textContent = entry.time || "";
-          item.append(message, time);
-          journal.appendChild(item);
-        });
-      }
-
-      function render() {
-        if (!game) return;
-        $("walletBalance").textContent = Math.floor(game.cfc).toLocaleString() + " CFC";
-        $("playerName").textContent = game.breederName;
-        $("playerState").textContent = game.homeState + ", Nigeria";
-        $("dogCount").textContent = game.dog ? "1" : "0";
-        $("careCount").textContent = String(game.careActions);
-        $("reputation").textContent = String(game.reputation);
-        $("purchaseCard").classList.toggle("hidden", !!game.dog);
-        $("dogCard").classList.toggle("hidden", !game.dog);
-        $("buyDogBtn").disabled = game.cfc < DOG_PRICE;
-
-        if (game.dog) {
-          const dog = game.dog;
-          $("dogName").textContent = dog.name;
-          $("dogDetails").textContent = dog.bloodline + " bloodline · " + dog.gender;
-          updateStat("health", dog.health);
-          updateStat("energy", dog.energy);
-          updateStat("hunger", dog.hunger);
-          updateStat("temper", dog.temperament);
-
-          let status = "Your dog is doing well. Keep up the care.";
-          if (dog.health <= 20) status = "Your dog's health is very low. Consider a basic health check.";
-          else if (dog.hunger >= 70) status = "Your dog is very hungry. Feeding may help.";
-          else if (dog.energy <= 20) status = "Your dog is exhausted. Let it rest.";
-          $("dogStatus").textContent = status;
-          $("feedBtn").disabled = game.cfc < FEED_PRICE || dog.hunger <= 0;
-          $("vetBtn").disabled = game.cfc < VET_PRICE;
-          $("playBtn").disabled = dog.energy < 15;
-        }
-
-        renderJournal();
-      }
-
-      function initSDK() {
-        try {
-          if (window.Vatar && typeof window.Vatar.init === "function") {
-            Promise.resolve(window.Vatar.init()).then((result) => {
-              if (result && result.player) {
-                sdkPlayer = result.player;
-                $("notice").textContent = "Lagos Life connection detected. Browser saving is still used for this prototype.";
-                if (game && !game.breederName && sdkPlayer.name) {
-                  game.breederName = String(sdkPlayer.name).slice(0, 24);
-                  saveGame();
-                  render();
-                }
-              } else {
-                $("notice").textContent = "Game running in prototype mode. Platform identity was not confirmed.";
-              }
-            }).catch(() => {
-              $("notice").textContent = "Game running in browser test mode. Lagos Life connection is not available.";
-            });
-          } else {
-            $("notice").textContent = "Game running in browser test mode. Lagos Life SDK was not detected.";
-          }
-        } catch (err) {
-          $("notice").textContent = "Game running in browser test mode.";
-        }
-      }
-
-      $("setupForm").addEventListener("submit", startNewGame);
-      $("buyDogBtn").addEventListener("click", buyFirstDog);
-      $("feedBtn").addEventListener("click", () => applyCare("feed"));
-      $("restBtn").addEventListener("click", () => applyCare("rest"));
-      $("playBtn").addEventListener("click", () => applyCare("play"));
-      $("vetBtn").addEventListener("click", () => applyCare("vet"));
-
-      game = loadGame();
-      if (game) {
-        $("notice").textContent = "Saved compound restored from this browser.";
-      } else {
-        $("notice").textContent = "Welcome! Create your breeder profile to begin.";
-      }
-      setScreen();
-      initSDK();
-    })();
-  </script>
+<script>
+(function(){
+"use strict";
+const SAVE_KEY="canineFarmingSaveV1",STARTING_CFC=700,DOG_PRICE=500,FEED_PRICE=25,VET_PRICE=30,DAILY_LIMIT=3;
+const JOBS=[
+{id:"walk",title:"Neighbourhood Dog Walk",description:"Help a local resident exercise their dog.",reward:45,icon:"🐕"},
+{id:"clean",title:"Kennel Cleaning",description:"Clean and prepare a small kennel.",reward:35,icon:"🧹"},
+{id:"deliver",title:"Pet Supply Delivery",description:"Deliver a bag of pet supplies to a nearby home.",reward:55,icon:"📦"},
+{id:"assist",title:"Assist at a Pet Shop",description:"Help organise supplies at a local pet shop.",reward:65,icon:"🛍️"}
+];
+let game=null,toastTimer=null;
+const $=id=>document.getElementById(id);
+function todayKey(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function showToast(message,error=false){const el=$("toast");el.textContent=message;el.style.color=error?"#ff8585":"#c8efd7";el.classList.remove("hidden");if(toastTimer)clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.add("hidden"),3600)}
+function saveGame(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(game));return true}catch(e){$("notice").textContent="Browser saving is unavailable. Keep this tab open to protect your progress.";return false}}
+function loadGame(){
+try{
+const raw=localStorage.getItem(SAVE_KEY);if(!raw)return null;
+const g=JSON.parse(raw);
+if(!g||g.version!==1||typeof g.cfc!=="number"||typeof g.breederName!=="string"||typeof g.homeState!=="string")return null;
+if(!Array.isArray(g.journal))g.journal=[];
+if(typeof g.careActions!=="number")g.careActions=0;
+if(typeof g.reputation!=="number")g.reputation=0;
+if(!g.jobs||typeof g.jobs!=="object")g.jobs={day:todayKey(),completed:[],earned:0};
+if(g.jobs.day!==todayKey())g.jobs={day:todayKey(),completed:[],earned:0};
+if(!Array.isArray(g.jobs.completed))g.jobs.completed=[];
+if(typeof g.jobs.earned!=="number")g.jobs.earned=0;
+return g;
+}catch(e){return null}
+}
+function addJournal(message){
+if(!Array.isArray(game.journal))game.journal=[];
+game.journal.unshift({message:message,time:new Date().toLocaleString()});
+game.journal=game.journal.slice(0,12)
+}
+function resetDailyJobs(){
+if(!game.jobs)game.jobs={day:todayKey(),completed:[],earned:0};
+if(game.jobs.day!==todayKey()){game.jobs={day:todayKey(),completed:[],earned:0};addJournal("A new game day has begun. Your job allowance has refreshed.")}
+}
+function setScreen(){const setup=!game;$("setupScreen").classList.toggle("hidden",!setup);$("gameScreen").classList.toggle("hidden",setup);if(!setup)render()}
+function startNewGame(event){
+event.preventDefault();
+const name=$("breederName").value.trim().slice(0,24),state=$("stateSelect").value,gender=$("dogGender").value;
+if(!name||!state||!gender){showToast("Please complete all breeder details.",true);return}
+game={version:1,breederName:name,homeState:state,cfc:STARTING_CFC,dog:null,careActions:0,reputation:0,journal:[],createdAt:Date.now(),jobs:{day:todayKey(),completed:[],earned:0}};
+addJournal("Welcome, "+name+"! Your compound has been established in "+state+".");
+addJournal("Your starting wallet contains 700 CFC.");
+saveGame();setScreen();$("notice").textContent="Your compound is ready. Your home state is fixed for this save.";showToast("Compound established. Welcome, breeder!")
+}
+function buyFirstDog(){
+if(!game||game.dog)return;
+if(game.cfc<DOG_PRICE){showToast("You need 500 CFC to buy your first dog.",true);return}
+game.cfc-=DOG_PRICE;
+game.dog={name:"Shepherd",gender:$("dogGender").value||"Female",bloodline:"Local",health:100,energy:100,hunger:10,temperament:70,bornAt:Date.now(),lastCareAt:Date.now()};
+game.reputation++;addJournal("You welcomed your first Local German Shepherd for 500 CFC.");saveGame();render();showToast("Congratulations! Your first German Shepherd is home.")
+}
+function applyCare(action){
+if(!game||!game.dog){showToast("Buy your first dog before choosing care.",true);return}
+const d=game.dog;
+if(action==="feed"){
+if(d.hunger<=0){showToast("Your dog is not hungry right now.");return}
+if(game.cfc<FEED_PRICE){showToast("Feeding costs 25 CFC.",true);return}
+game.cfc-=FEED_PRICE;d.hunger=Math.max(0,d.hunger-45);d.health=Math.min(100,d.health+3);d.temperament=Math.min(100,d.temperament+2);addJournal("You fed your German Shepherd. Cost: 25 CFC.")
+}else if(action==="rest"){
+d.energy=Math.min(100,d.energy+30);d.health=Math.min(100,d.health+2);d.hunger=Math.min(100,d.hunger+5);addJournal("Your German Shepherd rested and recovered energy.")
+}else if(action==="play"){
+if(d.energy<15){showToast("Your dog needs more energy before playing.",true);return}
+d.energy=Math.max(0,d.energy-15);d.hunger=Math.min(100,d.hunger+8);d.temperament=Math.min(100,d.temperament+8);addJournal("You played with your dog. Its temperament improved.")
+}else if(action==="vet"){
+if(game.cfc<VET_PRICE){showToast("A basic health check costs 30 CFC.",true);return}
+game.cfc-=VET_PRICE;d.health=Math.min(100,d.health+15);addJournal("A basic in-game health check improved your dog's health. Cost: 30 CFC.")
+}
+d.lastCareAt=Date.now();game.careActions++;if(game.careActions%3===0)game.reputation++;
+saveGame();render();showToast("Care recorded and progress saved when browser storage is available.")
+}
+function doJob(id){
+if(!game)return;resetDailyJobs();
+if(game.jobs.completed.length>=DAILY_LIMIT){showToast("You have completed today's three jobs. Come back tomorrow.",true);renderJobs();return}
+const job=JOBS.find(j=>j.id===id);if(!job)return;
+if(game.jobs.completed.includes(id)){showToast("You have already completed this job today.",true);return}
+game.jobs.completed.push(id);game.jobs.earned+=job.reward;game.cfc+=job.reward;
+game.reputation+=1;
+addJournal("Job completed: "+job.title+". You earned "+job.reward+" CFC.");
+saveGame();render();showToast("Job complete! You earned "+job.reward+" CFC.")
+}
+function updateStat(prefix,value){
+const v=Math.max(0,Math.min(100,Math.round(Number(value)||0)));
+$(prefix+"Text").textContent=v+"%";
+const bar=$(prefix+"Bar");bar.style.width=v+"%";bar.classList.toggle("low",v<=45&&v>20);bar.classList.toggle("critical",v<=20)
+}
+function renderJournal(){
+const el=$("journal");el.replaceChildren();
+if(!game.journal.length){const p=document.createElement("p");p.className="muted";p.textContent="Your story will appear here.";el.appendChild(p);return}
+game.journal.forEach(entry=>{const item=document.createElement("div");item.className="log-item";const msg=document.createElement("div");msg.textContent=entry.message;const time=document.createElement("div");time.className="muted";time.textContent=entry.time||"";item.append(msg,time);el.appendChild(item)})
+}
+function renderJobs(){
+resetDailyJobs();
+$("jobsToday").textContent=game.jobs.completed.length+" / "+DAILY_LIMIT;
+$("earnedToday").textContent=game.jobs.earned+" CFC";
+const list=$("jobsList");list.replaceChildren();
+JOBS.forEach(job=>{
+const done=game.jobs.completed.includes(job.id),limit=game.jobs.completed.length>=DAILY_LIMIT;
+const card=document.createElement("div");card.className="job";
+const head=document.createElement("div");head.className="job-head";
+const details=document.createElement("div");const title=document.createElement("h3");title.textContent=job.icon+" "+job.title;
+const desc=document.createElement("p");desc.className="muted";desc.textContent=job.description;details.append(title,desc);
+const reward=document.createElement("div");reward.className="job-reward";reward.textContent="+"+job.reward+" CFC";head.append(details,reward);card.appendChild(head);
+const button=document.createElement("button");button.type="button";button.className="btn "+(done?"quiet":"secondary");button.textContent=done?"✓ Completed today":limit?"Daily limit reached":"Complete job";
+button.disabled=done||limit;button.addEventListener("click",()=>doJob(job.id));card.appendChild(button);list.appendChild(card)
+});
+$("jobsNotice").textContent=game.jobs.completed.length>=DAILY_LIMIT?"Daily limit reached. Your jobs refresh on the next calendar day.":(DAILY_LIMIT-game.jobs.completed.length)+" job(s) remaining today. Each job can be completed once per day."
+}
+function render(){
+if(!game)return;resetDailyJobs();
+$("walletBalance").textContent=Math.floor(game.cfc).toLocaleString()+" CFC";
+$("playerName").textContent=game.breederName;$("playerState").textContent=game.homeState+", Nigeria";
+$("dogCount").textContent=game.dog?"1":"0";$("careCount").textContent=String(game.careActions);$("reputation").textContent=String(game.reputation);
+$("purchaseCard").classList.toggle("hidden",!!game.dog);$("dogCard").classList.toggle("hidden",!game.dog);$("buyDogBtn").disabled=game.cfc<DOG_PRICE;
+if(game.dog){
+const d=game.dog;$("dogName").textContent=d.name;$("dogDetails").textContent=d.bloodline+" bloodline · "+d.gender;
+updateStat("health",d.health);updateStat("energy",d.energy);updateStat("hunger",d.hunger);updateStat("temper",d.temperament);
+let status="Your dog is doing well. Keep up the care.";
+if(d.health<=20)status="Your dog's health is very low. Consider a basic health check.";
+else if(d.hunger>=70)status="Your dog is very hungry. Feeding may help.";
+else if(d.energy<=20)status="Your dog is exhausted. Let it rest.";
+$("dogStatus").textContent=status;$("feedBtn").disabled=game.cfc<FEED_PRICE||d.hunger<=0;$("vetBtn").disabled=game.cfc<VET_PRICE;$("playBtn").disabled=d.energy<15
+}
+renderJobs();renderJournal()
+}
+$("setupForm").addEventListener("submit",startNewGame);
+$("buyDogBtn").addEventListener("click",buyFirstDog);
+$("feedBtn").addEventListener("click",()=>applyCare("feed"));
+$("restBtn").addEventListener("click",()=>applyCare("rest"));
+$("playBtn").addEventListener("click",()=>applyCare("play"));
+$("vetBtn").addEventListener("click",()=>applyCare("vet"));
+game=loadGame();
+if(game){$("notice").textContent="Saved compound restored from this browser."}else{$("notice").textContent="Welcome! Create your breeder profile to begin."}
+setScreen();
+})();
+</script>
 </body>
 </html>
-
