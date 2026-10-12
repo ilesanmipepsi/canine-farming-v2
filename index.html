@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#071711">
 <title>Canine Farming</title>
+<script src="https://lagoslife.app/sdk/vatar-games-v1.js"></script>
 <style>
 :root{color-scheme:dark;--bg:#071711;--panel:#102b20;--border:#2a5b42;--gold:#f4c95d;--green:#65d49a;--muted:#a7c3b2}
 *{box-sizing:border-box}
@@ -163,36 +164,62 @@ footer{text-align:center;color:#86a795;font-size:.76rem;padding:12px}
 <footer>Canine Farming · CFC is fictional in-game currency.</footer>
 </main>
 
-<!-- 1. Vatar SDK -->
-<script src="https://lagoslife.app/sdk/vatar-games-v1.js"></script>
-
 <script>
 (function(){
 "use strict";
 
-// 2. Lagos Life Vatar SDK integration
-let vatarPaused = false;
-let vatarPlayer = null;
+/*
+ * Lagos Life Vatar integration:
+ * - SDK initialization is guarded so ordinary browser visits still work.
+ * - Pause/resume only gates this game's periodic care timer.
+ * - No purchases or paid CFC grants are enabled in this client-only release.
+ */
+let vatarPaused=false;
+let vatarPlayer=null;
+let vatarSession=null;
+let vatarMode=null;
+let vatarStatus="not-initialized";
 
-try {
-  if (window.Vatar) {
-    vatarPlayer = Vatar.init();
-
-    Vatar.onPause(() => {
-      vatarPaused = true;
-    });
-
-    Vatar.onResume(() => {
-      vatarPaused = false;
-    });
-
-    console.info("Vatar SDK initialized.");
-  } else {
-    console.info("Vatar SDK unavailable outside the game player.");
-  }
-} catch (error) {
-  console.warn("Vatar initialization failed:", error);
+function initializeVatar(){
+try{
+if(!window.Vatar||typeof window.Vatar.init!=="function"){
+vatarStatus="sdk-unavailable";
+console.info("Vatar SDK unavailable; running standalone.");
+return;
 }
+const result=window.Vatar.init();
+if(result&&typeof result.then==="function"){
+result.then(handleVatarInit).catch(error=>{
+vatarStatus="init-failed";
+console.warn("Vatar initialization failed; standalone game remains available.",error);
+});
+}else{
+handleVatarInit(result);
+}
+if(typeof window.Vatar.onPause==="function"){
+window.Vatar.onPause(()=>{vatarPaused=true;});
+}
+if(typeof window.Vatar.onResume==="function"){
+window.Vatar.onResume(()=>{vatarPaused=false;});
+}
+}catch(error){
+vatarStatus="init-failed";
+console.warn("Vatar initialization failed; standalone game remains available.",error);
+}
+}
+function handleVatarInit(result){
+if(result&&typeof result==="object"){
+vatarPlayer=result.player||null;
+vatarSession=result.session||null;
+vatarMode=result.mode||null;
+vatarStatus="initialized";
+console.info("Vatar SDK initialized.",{playerAvailable:!!vatarPlayer,mode:vatarMode});
+}else{
+vatarStatus="init-returned-no-session";
+console.warn("Vatar init returned no usable result.");
+}
+}
+initializeVatar();
 
 const KEY="canineFarmingSaveV1",DAY=86400000,FEED=25,VET=30,LIMIT=3,UPGRADE_COST=300,DOG_COST=500;
 
@@ -280,12 +307,7 @@ if(!g.jobs||typeof g.jobs!=="object")g.jobs={day:today(),completed:[],earned:0};
 if(g.jobs.day!==today())g.jobs={day:today(),completed:[],earned:0};
 if(!Array.isArray(g.jobs.completed))g.jobs.completed=[];
 if(typeof g.jobs.earned!=="number")g.jobs.earned=0;
-
-/* Migrate older single-dog saves without deleting existing dogs.
-   Older dogs without a breed are assigned German Shepherd. */
-if(!Array.isArray(g.dogs)){
-g.dogs=g.dog?[g.dog]:[];
-}
+if(!Array.isArray(g.dogs)){g.dogs=g.dog?[g.dog]:[];}
 g.dogs=g.dogs.filter(d=>d&&typeof d==="object").map(d=>{
 if(!d.id)d.id="dog-"+(nextDogId++);
 if(!d.name)d.name="Shepherd";
@@ -355,22 +377,7 @@ function setup(event){
 event.preventDefault();
 const name=$("breederName").value.trim().slice(0,24),state=$("stateSelect").value;
 if(!name||!state)return;
-game={
-version:1,
-breederName:name,
-homeState:state,
-cfc:700,
-dog:null,
-dogs:[],
-kennelLevel:0,
-kennelUpgraded:false,
-careActions:0,
-reputation:0,
-journal:[],
-createdAt:Date.now(),
-jobs:{day:today(),completed:[],earned:0},
-nextDogId:1
-};
+game={version:1,breederName:name,homeState:state,cfc:700,dog:null,dogs:[],kennelLevel:0,kennelUpgraded:false,careActions:0,reputation:0,journal:[],createdAt:Date.now(),jobs:{day:today(),completed:[],earned:0},nextDogId:1};
 journal("Welcome, "+name+"! Your compound is in "+state+".");
 journal("Your starting wallet contains 700 CFC.");
 journal("Choose from eight starter breeds. Your first dog costs 500 CFC.");
@@ -388,8 +395,7 @@ function buyFirstDog(){
 if(!game||game.dogs.length)return;
 if(game.cfc<DOG_COST){toast("You need 500 CFC.",true);return}
 if(game.dogs.length>=capacity()){toast("Your kennel has no available space.",true);return}
-const breed=$("firstPurchaseBreed").value;
-const gender=$("firstPurchaseGender").value;
+const breed=$("firstPurchaseBreed").value,gender=$("firstPurchaseGender").value;
 if(!BREEDS.some(b=>b.id===breed)){toast("Please choose a valid breed.",true);return}
 game.cfc-=DOG_COST;
 const d=newDog(breedName(breed),gender,breed);
@@ -402,8 +408,7 @@ save();render();toast("Your "+breedName(breed)+" is home!");
 function upgradeKennel(){
 if(game.kennelUpgraded){toast("Your kennel is already upgraded.");return}
 if(game.cfc<UPGRADE_COST){toast("You need 300 CFC for the kennel upgrade.",true);return}
-game.cfc-=UPGRADE_COST;game.kennelUpgraded=true;game.kennelLevel=1;
-game.reputation++;
+game.cfc-=UPGRADE_COST;game.kennelUpgraded=true;game.kennelLevel=1;game.reputation++;
 journal("Kennel upgraded! Capacity increased from one dog to three. Cost: 300 CFC.");
 save();render();toast("Kennel upgraded! You can now house three dogs.");
 }
@@ -414,14 +419,12 @@ if(game.dogs.length>=capacity()){toast("Upgrade your kennel to make more space."
 if(game.cfc<DOG_COST){toast("You need 500 CFC to buy another dog.",true);return}
 const breed=$("newDogBreed").value;
 if(!BREEDS.some(b=>b.id===breed)){toast("Please choose a valid breed.",true);return}
-const name=$("newDogName").value.trim().slice(0,24)||breedName(breed)+" "+(game.dogs.length+1);
-const gender=$("newDogGender").value;
+const name=$("newDogName").value.trim().slice(0,24)||breedName(breed)+" "+(game.dogs.length+1),gender=$("newDogGender").value;
 game.cfc-=DOG_COST;
 const d=newDog(name,gender,breed);
 game.dogs.push(d);game.dog=d;game.nextDogId=nextDogId;game.reputation++;
 journal("You welcomed "+d.name+", a Local "+d.gender+" "+breedName(breed)+", for 500 CFC.");
-$("newDogName").value="";
-save();render();toast(d.name+" has joined your kennel!");
+$("newDogName").value="";save();render();toast(d.name+" has joined your kennel!");
 }
 
 function renameDog(id){
@@ -429,8 +432,7 @@ const d=game.dogs.find(x=>x.id===id);if(!d)return;
 const input=$("rename-"+id);if(!input)return;
 const name=input.value.trim().slice(0,24);
 if(!name){toast("Enter a name first.",true);return}
-const old=d.name;d.name=name;
-journal("You renamed "+old+" to "+name+".");
+const old=d.name;d.name=name;journal("You renamed "+old+" to "+name+".");
 save();render();toast("Dog renamed to "+name+".");
 }
 
@@ -443,16 +445,13 @@ if(game.cfc<FEED){toast("Feeding costs 25 CFC.",true);return}
 game.cfc-=FEED;d.hunger=Math.max(0,d.hunger-45);d.health=Math.min(100,d.health+3);d.temperament=Math.min(100,d.temperament+2);d.healthStressHours=0;
 journal("You fed "+d.name+". Cost: 25 CFC.");
 }else if(action==="rest"){
-d.energy=Math.min(100,d.energy+30);d.health=Math.min(100,d.health+2);d.hunger=Math.min(100,d.hunger+5);d.healthStressHours=0;
-journal(d.name+" rested and recovered energy.");
+d.energy=Math.min(100,d.energy+30);d.health=Math.min(100,d.health+2);d.hunger=Math.min(100,d.hunger+5);d.healthStressHours=0;journal(d.name+" rested and recovered energy.");
 }else if(action==="play"){
 if(d.energy<15){toast(d.name+" needs more energy.",true);return}
-d.energy=Math.max(0,d.energy-15);d.hunger=Math.min(100,d.hunger+8);d.temperament=Math.min(100,d.temperament+8);
-journal("You played with "+d.name+".");
+d.energy=Math.max(0,d.energy-15);d.hunger=Math.min(100,d.hunger+8);d.temperament=Math.min(100,d.temperament+8);journal("You played with "+d.name+".");
 }else if(action==="vet"){
 if(game.cfc<VET){toast("A basic check costs 30 CFC.",true);return}
-game.cfc-=VET;d.health=Math.min(100,d.health+25);d.healthStressHours=0;
-journal(d.name+" received a basic health check. Cost: 30 CFC.");
+game.cfc-=VET;d.health=Math.min(100,d.health+25);d.healthStressHours=0;journal(d.name+" received a basic health check. Cost: 30 CFC.");
 }
 d.lastCareAt=Date.now();game.careActions++;
 if(game.careActions%3===0)game.reputation++;
@@ -470,8 +469,7 @@ save();render();toast("You earned "+j.reward+" CFC!");
 }
 
 function statMarkup(d,key,label,value){
-const n=Math.max(0,Math.min(100,Math.round(Number(value)||0)));
-const cls=n<=20?"critical":n<=45?"low":"";
+const n=Math.max(0,Math.min(100,Math.round(Number(value)||0))),cls=n<=20?"critical":n<=45?"low":"";
 return '<div class="stat"><div class="stat-top"><span>'+label+'</span><b>'+n+'%</b></div><div class="track"><div class="fill '+cls+'" style="width:'+n+'%"></div></div></div>';
 }
 
@@ -480,8 +478,7 @@ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"
 }
 
 function dogCard(d){
-const age=ageInfo(d);
-const breed=breedName(d.breed);
+const age=ageInfo(d),breed=breedName(d.breed);
 let warning="Your dog is doing well. Keep up the care.";
 if(d.health<=30)warning="⚠️ Health is low. A vet check and regular care may help.";
 else if(d.hunger>=90)warning="⚠️ Critical hunger. Feed your dog soon to protect its health.";
@@ -489,7 +486,6 @@ else if(d.energy<=5)warning="⚠️ Energy is critically low. Let your dog rest.
 else if(d.hunger>=70)warning="Your dog is very hungry. Feeding may help.";
 else if(d.energy<=20)warning="Your dog is tired. Let it rest.";
 else if(d.health<70)warning="Your dog needs extra care. Feeding, rest and a vet check can help.";
-
 return '<article class="dog-card">'+
 '<div class="dog-heading"><div class="dog-icon">🐕</div><div style="flex:1;min-width:0"><div class="dog-name">'+safeText(d.name)+'</div><div class="muted">'+safeText(breed)+' · '+safeText(d.bloodline)+' bloodline · '+safeText(d.gender)+'</div><span class="pill">'+age.stage+' · '+age.days+' day(s) old</span></div></div>'+
 '<label for="rename-'+safeText(d.id)+'">Dog name</label><input id="rename-'+safeText(d.id)+'" maxlength="24" value="'+safeText(d.name)+'" aria-label="Dog name">'+
@@ -506,17 +502,11 @@ return '<article class="dog-card">'+
 
 function render(){
 if(!game)return;
-daily();
-game.dogs.forEach(elapsedCare);
-game.dog=game.dogs[game.dogs.length-1]||null;
-
+daily();game.dogs.forEach(elapsedCare);game.dog=game.dogs[game.dogs.length-1]||null;
 $("walletBalance").textContent=Math.floor(game.cfc).toLocaleString()+" CFC";
-$("playerName").textContent=game.breederName;
-$("playerState").textContent=game.homeState+", Nigeria";
-$("dogCount").textContent=game.dogs.length;
-$("progressDogs").textContent=game.dogs.length;
-$("careCount").textContent=game.careActions;
-$("reputation").textContent=game.reputation;
+$("playerName").textContent=game.breederName;$("playerState").textContent=game.homeState+", Nigeria";
+$("dogCount").textContent=game.dogs.length;$("progressDogs").textContent=game.dogs.length;
+$("careCount").textContent=game.careActions;$("reputation").textContent=game.reputation;
 $("kennelCapacity").textContent=capacity()+" dog"+(capacity()===1?"":"s");
 $("firstPurchaseCard").classList.toggle("hidden",game.dogs.length>0);
 $("buyFirstDogBtn").disabled=game.dogs.length>0||game.cfc<DOG_COST||game.dogs.length>=capacity();
@@ -528,65 +518,39 @@ $("upgradeInfo").textContent=game.kennelUpgraded?"Upgrade purchased. Current cap
 $("buyAnotherDogBtn").disabled=game.dogs.length===0||game.dogs.length>=capacity()||game.cfc<DOG_COST;
 $("buyAnotherDogBtn").textContent=game.cfc<DOG_COST?"Not enough CFC · Need 500":"Purchase Dog · 500 CFC";
 $("purchaseNotice").textContent=game.dogs.length===0?"Purchase your first dog before expanding.":game.dogs.length>=capacity()?"Kennel full. Upgrade your kennel to add more dogs.":game.cfc<DOG_COST?"You need 500 CFC. Complete jobs to earn more.":(capacity()-game.dogs.length)+" kennel space(s) available.";
-
 const list=$("dogList");
 list.innerHTML=game.dogs.length?game.dogs.map(dogCard).join(""):'<div class="status">Your kennel is empty. Choose a breed and purchase your first dog to get started.</div>';
-
 list.querySelectorAll("[data-rename]").forEach(b=>b.addEventListener("click",()=>renameDog(b.dataset.rename)));
 list.querySelectorAll("[data-care]").forEach(b=>b.addEventListener("click",()=>care(b.dataset.id,b.dataset.care)));
-
-$("jobsToday").textContent=game.jobs.completed.length+" / "+LIMIT;
-$("earnedToday").textContent=game.jobs.earned+" CFC";
+$("jobsToday").textContent=game.jobs.completed.length+" / "+LIMIT;$("earnedToday").textContent=game.jobs.earned+" CFC";
 const jobs=$("jobsList");jobs.replaceChildren();
 JOBS.forEach(j=>{
 const done=game.jobs.completed.includes(j.id),limit=game.jobs.completed.length>=LIMIT,c=document.createElement("div");
-c.className="job";
-const h=document.createElement("div");h.className="job-head";
+c.className="job";const h=document.createElement("div");h.className="job-head";
 const info=document.createElement("div"),t=document.createElement("h3"),p=document.createElement("p"),r=document.createElement("b");
 t.textContent=j.icon+" "+j.title;p.className="muted";p.textContent=j.description;r.className="job-reward";r.textContent="+"+j.reward+" CFC";
 info.append(t,p);h.append(info,r);c.append(h);
 const b=document.createElement("button");b.className="btn "+(done?"quiet":"secondary");b.textContent=done?"✓ Completed today":limit?"Daily limit reached":"Complete job";b.disabled=done||limit;b.addEventListener("click",()=>job(j.id));c.append(b);jobs.append(c);
 });
-
 $("jobsNotice").textContent=game.jobs.completed.length>=LIMIT?"Daily limit reached. Return tomorrow.":(LIMIT-game.jobs.completed.length)+" job(s) remaining today.";
-
 const log=$("journal");log.replaceChildren();
 if(!game.journal.length)log.textContent="Your story will appear here.";
-else game.journal.forEach(x=>{
-const e=document.createElement("div");e.className="log-item";
-const m=document.createElement("div"),t=document.createElement("div");m.textContent=x.message;t.className="muted";t.textContent=x.time||"";e.append(m,t);log.append(e);
-});
+else game.journal.forEach(x=>{const e=document.createElement("div");e.className="log-item";const m=document.createElement("div"),t=document.createElement("div");m.textContent=x.message;t.className="muted";t.textContent=x.time||"";e.append(m,t);log.append(e);});
 save();
 }
 
-populateBreedSelect("dogBreed");
-populateBreedSelect("firstPurchaseBreed");
-populateBreedSelect("newDogBreed");
+populateBreedSelect("dogBreed");populateBreedSelect("firstPurchaseBreed");populateBreedSelect("newDogBreed");
+$("dogBreed").addEventListener("change",()=>{$("firstPurchaseBreed").value=$("dogBreed").value;});
+$("firstPurchaseBreed").addEventListener("change",()=>{$("dogBreed").value=$("firstPurchaseBreed").value;});
+$("setupForm").addEventListener("submit",setup);$("buyFirstDogBtn").addEventListener("click",buyFirstDog);
+$("upgradeKennelBtn").addEventListener("click",upgradeKennel);$("buyAnotherDogBtn").addEventListener("click",buyAnotherDog);
 
-$("dogBreed").addEventListener("change",()=>{
-$("firstPurchaseBreed").value=$("dogBreed").value;
-});
-$("firstPurchaseBreed").addEventListener("change",()=>{
-$("dogBreed").value=$("firstPurchaseBreed").value;
-});
-
-$("setupForm").addEventListener("submit",setup);
-$("buyFirstDogBtn").addEventListener("click",buyFirstDog);
-$("upgradeKennelBtn").addEventListener("click",upgradeKennel);
-$("buyAnotherDogBtn").addEventListener("click",buyAnotherDog);
-
-game=load();
-$("notice").textContent=game?"Saved compound restored from this browser.":"Welcome! Create your breeder profile to begin.";
-
-if(game){
-game.dogs.forEach(elapsedCare);
-game.dog=game.dogs[game.dogs.length-1]||null;
-}
+game=load();$("notice").textContent=game?"Saved compound restored from this browser.":"Welcome! Create your breeder profile to begin.";
+if(game){game.dogs.forEach(elapsedCare);game.dog=game.dogs[game.dogs.length-1]||null;}
 screen();
 
-// 3. Modified setInterval – respects Vatar pause
 setInterval(()=>{
-if(game && !vatarPaused){
+if(game&&!vatarPaused){
 game.dogs.forEach(elapsedCare);
 save();
 render();
@@ -595,4 +559,4 @@ render();
 })();
 </script>
 </body>
-   </html>
+                                                                                                                                                                                                                                                                                                                                                           </html>
