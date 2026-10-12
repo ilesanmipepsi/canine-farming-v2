@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -164,9 +163,36 @@ footer{text-align:center;color:#86a795;font-size:.76rem;padding:12px}
 <footer>Canine Farming · CFC is fictional in-game currency.</footer>
 </main>
 
+<!-- 1. Vatar SDK -->
+<script src="https://lagoslife.app/sdk/vatar-games-v1.js"></script>
+
 <script>
 (function(){
 "use strict";
+
+// 2. Lagos Life Vatar SDK integration
+let vatarPaused = false;
+let vatarPlayer = null;
+
+try {
+  if (window.Vatar) {
+    vatarPlayer = Vatar.init();
+
+    Vatar.onPause(() => {
+      vatarPaused = true;
+    });
+
+    Vatar.onResume(() => {
+      vatarPaused = false;
+    });
+
+    console.info("Vatar SDK initialized.");
+  } else {
+    console.info("Vatar SDK unavailable outside the game player.");
+  }
+} catch (error) {
+  console.warn("Vatar initialization failed:", error);
+}
 
 const KEY="canineFarmingSaveV1",DAY=86400000,FEED=25,VET=30,LIMIT=3,UPGRADE_COST=300,DOG_COST=500;
 
@@ -558,8 +584,9 @@ game.dog=game.dogs[game.dogs.length-1]||null;
 }
 screen();
 
+// 3. Modified setInterval – respects Vatar pause
 setInterval(()=>{
-if(game){
+if(game && !vatarPaused){
 game.dogs.forEach(elapsedCare);
 save();
 render();
@@ -568,4 +595,4 @@ render();
 })();
 </script>
 </body>
-</html>
+   </html>
