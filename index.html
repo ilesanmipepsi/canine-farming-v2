@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -26,12 +27,12 @@ input,select{width:100%;min-height:46px;padding:10px;border-radius:10px;backgrou
 .primary{background:linear-gradient(100deg,#f4d36c,#dcae31);color:#102016}
 .secondary{background:#28583f;color:white;border:1px solid #427756}
 .quiet{background:transparent;color:var(--muted);border:1px solid #355c46}
-.btn:disabled{opacity:.45}
+.btn:disabled{opacity:.45;cursor:not-allowed}
 .status{padding:10px 12px;border-radius:10px;background:#0a2016;color:var(--muted);font-size:.87rem}
 .wallet{display:flex;justify-content:space-between;align-items:center;gap:12px}
 .wallet-label{color:var(--muted);font-size:.8rem}
 .balance{font-size:1.5rem;color:var(--gold);font-weight:850;overflow-wrap:anywhere}
-.pill{display:inline-block;border:1px solid #3d7655;border-radius:99px;padding:4px 9px;font-size:.75rem;color:#c8efd7}
+.pill{display:inline-block;border:1px solid #3d7655;border-radius:99px;padding:4px 9px;font-size:.75rem;color:#c8efd7;margin-top:4px}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .stat{background:#0a2116;border-radius:11px;padding:10px;min-width:0}
 .stat-top{display:flex;justify-content:space-between;gap:4px;font-size:.8rem;margin-bottom:6px}
@@ -63,7 +64,7 @@ footer{text-align:center;color:#86a795;font-size:.76rem;padding:12px}
 <div style="font-size:2.4rem">🐕</div>
 <div class="eyebrow">Your journey begins here</div>
 <h1>CANINE FARMING</h1>
-<p class="muted">Raise, care for and breed German Shepherds</p>
+<p class="muted">Raise, care for and breed the dogs you choose</p>
 </header>
 
 <div id="notice" class="status" role="status">Loading compound...</div>
@@ -80,10 +81,12 @@ footer{text-align:center;color:#86a795;font-size:.76rem;padding:12px}
 <option value="">Choose your state</option>
 <option>Abia</option><option>Adamawa</option><option>Akwa Ibom</option><option>Anambra</option><option>Bauchi</option><option>Bayelsa</option><option>Benue</option><option>Borno</option><option>Cross River</option><option>Delta</option><option>Ebonyi</option><option>Edo</option><option>Ekiti</option><option>Enugu</option><option>Gombe</option><option>Imo</option><option>Jigawa</option><option>Kaduna</option><option>Kano</option><option>Katsina</option><option>Kebbi</option><option>Kogi</option><option>Kwara</option><option>Lagos</option><option>Nasarawa</option><option>Niger</option><option>Ogun</option><option>Ondo</option><option>Osun</option><option>Oyo</option><option>Plateau</option><option>Rivers</option><option>Sokoto</option><option>Taraba</option><option>Yobe</option><option>Zamfara</option><option>Federal Capital Territory (Abuja)</option>
 </select>
+<label for="dogBreed">Choose your first dog's breed</label>
+<select id="dogBreed" required></select>
 <label for="dogGender">First dog's gender</label>
 <select id="dogGender"><option>Female</option><option>Male</option></select>
-<div class="status" style="margin-top:12px">Starting wallet: <b class="gold">700 CFC</b><br>First Local German Shepherd: <b>500 CFC</b></div>
-<button class="btn primary">Establish My Compound</button>
+<div class="status" style="margin-top:12px">Starting wallet: <b class="gold">700 CFC</b><br>First dog of your chosen breed: <b>500 CFC</b></div>
+<button class="btn primary" type="submit">Establish My Compound</button>
 </form>
 </section>
 
@@ -98,8 +101,13 @@ footer{text-align:center;color:#86a795;font-size:.76rem;padding:12px}
 </section>
 
 <section id="firstPurchaseCard" class="card">
-<div class="eyebrow">First investment</div><h2>Welcome to your compound</h2>
-<p class="muted">Purchase your first Local German Shepherd to begin.</p>
+<div class="eyebrow">First investment</div>
+<h2>Welcome to your compound</h2>
+<p class="muted">Choose the breed you want to welcome into your kennel.</p>
+<label for="firstPurchaseBreed">First dog's breed</label>
+<select id="firstPurchaseBreed"></select>
+<label for="firstPurchaseGender">First dog's gender</label>
+<select id="firstPurchaseGender"><option>Female</option><option>Male</option></select>
 <b class="gold">500 CFC</b>
 <button id="buyFirstDogBtn" class="btn primary">Buy My First Dog · 500 CFC</button>
 </section>
@@ -107,7 +115,7 @@ footer{text-align:center;color:#86a795;font-size:.76rem;padding:12px}
 <section class="card">
 <div class="eyebrow">Your compound</div>
 <h2>🐕 Dog profiles</h2>
-<p class="muted">Each dog has its own needs and life stage. Rename dogs and manage their care individually.</p>
+<p class="muted">Each dog has its own breed, needs and life stage. Rename dogs and manage their care individually.</p>
 <div id="dogList"></div>
 </section>
 
@@ -118,13 +126,15 @@ footer{text-align:center;color:#86a795;font-size:.76rem;padding:12px}
 <div id="upgradeInfo" class="status"></div>
 <button id="upgradeKennelBtn" class="btn primary">Upgrade Kennel · 300 CFC</button>
 <div class="divider"></div>
-<h3>🐾 Add another German Shepherd</h3>
-<p class="muted">Each new dog costs 500 CFC. You must have available kennel space.</p>
+<h3>🐾 Add another dog</h3>
+<p class="muted">Choose a breed for each new dog. Each costs 500 CFC, and you must have available kennel space.</p>
+<label for="newDogBreed">New dog's breed</label>
+<select id="newDogBreed"></select>
 <label for="newDogGender">New dog's gender</label>
 <select id="newDogGender"><option>Female</option><option>Male</option></select>
 <label for="newDogName">Dog's name</label>
 <input id="newDogName" maxlength="24" placeholder="e.g. Shadow">
-<button id="buyAnotherDogBtn" class="btn secondary">Purchase Local Dog · 500 CFC</button>
+<button id="buyAnotherDogBtn" class="btn secondary">Purchase Dog · 500 CFC</button>
 <div id="purchaseNotice" class="muted" style="margin-top:8px"></div>
 </section>
 
@@ -159,6 +169,20 @@ footer{text-align:center;color:#86a795;font-size:.76rem;padding:12px}
 "use strict";
 
 const KEY="canineFarmingSaveV1",DAY=86400000,FEED=25,VET=30,LIMIT=3,UPGRADE_COST=300,DOG_COST=500;
+
+const BREEDS=[
+{id:"german-shepherd",name:"German Shepherd"},
+{id:"rottweiler",name:"Rottweiler"},
+{id:"labrador-retriever",name:"Labrador Retriever"},
+{id:"boerboel",name:"Boerboel"},
+{id:"doberman-pinscher",name:"Doberman Pinscher"},
+{id:"french-bulldog",name:"French Bulldog"},
+{id:"lhasa-apso",name:"Lhasa Apso"},
+{id:"nigerian-local",name:"Nigerian Local Dog"}
+];
+
+const DEFAULT_BREED="german-shepherd";
+
 const JOBS=[
 {id:"walk",title:"Neighbourhood Dog Walk",description:"Exercise a local resident's dog.",reward:45,icon:"🐕"},
 {id:"clean",title:"Kennel Cleaning",description:"Clean a small kennel.",reward:35,icon:"🧹"},
@@ -169,6 +193,21 @@ const JOBS=[
 const $=id=>document.getElementById(id);
 let game=null,toastTimer=null,nextDogId=1;
 
+function breedName(id){
+const breed=BREEDS.find(b=>b.id===id);
+return breed?breed.name:"German Shepherd";
+}
+function populateBreedSelect(id){
+const select=$(id);
+select.replaceChildren();
+BREEDS.forEach(breed=>{
+const option=document.createElement("option");
+option.value=breed.id;
+option.textContent=breed.name;
+select.append(option);
+});
+select.value=DEFAULT_BREED;
+}
 function today(){
 const d=new Date();
 return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
@@ -185,8 +224,22 @@ function journal(message){
 game.journal.unshift({message,time:new Date().toLocaleString()});
 game.journal=game.journal.slice(0,30);
 }
-function newDog(name,gender){
-return {id:"dog-"+(nextDogId++),name:name||"Shepherd",gender:bloodGender(gender),bloodline:"Local",health:100,energy:100,hunger:10,temperament:70,bornAt:Date.now(),lastCareAt:Date.now(),healthStressHours:0};
+function newDog(name,gender,breed){
+const chosenBreed=BREEDS.some(b=>b.id===breed)?breed:DEFAULT_BREED;
+return {
+id:"dog-"+(nextDogId++),
+name:name||breedName(chosenBreed),
+gender:bloodGender(gender),
+breed:chosenBreed,
+bloodline:"Local",
+health:100,
+energy:100,
+hunger:10,
+temperament:70,
+bornAt:Date.now(),
+lastCareAt:Date.now(),
+healthStressHours:0
+};
 }
 function bloodGender(g){return g==="Male"?"Male":"Female"}
 
@@ -202,7 +255,8 @@ if(g.jobs.day!==today())g.jobs={day:today(),completed:[],earned:0};
 if(!Array.isArray(g.jobs.completed))g.jobs.completed=[];
 if(typeof g.jobs.earned!=="number")g.jobs.earned=0;
 
-/* Migrate the old single-dog save without deleting the existing dog. */
+/* Migrate older single-dog saves without deleting existing dogs.
+   Older dogs without a breed are assigned German Shepherd. */
 if(!Array.isArray(g.dogs)){
 g.dogs=g.dog?[g.dog]:[];
 }
@@ -211,6 +265,7 @@ if(!d.id)d.id="dog-"+(nextDogId++);
 if(!d.name)d.name="Shepherd";
 if(!d.gender)d.gender="Female";
 if(!d.bloodline)d.bloodline="Local";
+if(!BREEDS.some(b=>b.id===d.breed))d.breed=DEFAULT_BREED;
 if(typeof d.health!=="number")d.health=100;
 if(typeof d.energy!=="number")d.energy=100;
 if(typeof d.hunger!=="number")d.hunger=10;
@@ -274,11 +329,28 @@ function setup(event){
 event.preventDefault();
 const name=$("breederName").value.trim().slice(0,24),state=$("stateSelect").value;
 if(!name||!state)return;
-game={version:1,breederName:name,homeState:state,cfc:700,dog:null,dogs:[],kennelLevel:0,kennelUpgraded:false,careActions:0,reputation:0,journal:[],createdAt:Date.now(),jobs:{day:today(),completed:[],earned:0},nextDogId:1};
+game={
+version:1,
+breederName:name,
+homeState:state,
+cfc:700,
+dog:null,
+dogs:[],
+kennelLevel:0,
+kennelUpgraded:false,
+careActions:0,
+reputation:0,
+journal:[],
+createdAt:Date.now(),
+jobs:{day:today(),completed:[],earned:0},
+nextDogId:1
+};
 journal("Welcome, "+name+"! Your compound is in "+state+".");
 journal("Your starting wallet contains 700 CFC.");
+journal("Choose from eight starter breeds. Your first dog costs 500 CFC.");
 save();screen();$("notice").textContent="Your compound is ready.";toast("Welcome, breeder!");
 }
+
 function screen(){
 const fresh=!game;
 $("setupScreen").classList.toggle("hidden",!fresh);
@@ -289,13 +361,18 @@ if(!fresh)render();
 function buyFirstDog(){
 if(!game||game.dogs.length)return;
 if(game.cfc<DOG_COST){toast("You need 500 CFC.",true);return}
+if(game.dogs.length>=capacity()){toast("Your kennel has no available space.",true);return}
+const breed=$("firstPurchaseBreed").value;
+const gender=$("firstPurchaseGender").value;
+if(!BREEDS.some(b=>b.id===breed)){toast("Please choose a valid breed.",true);return}
 game.cfc-=DOG_COST;
-const d=newDog("Shepherd",$("dogGender").value);
+const d=newDog(breedName(breed),gender,breed);
 game.dogs.push(d);game.dog=d;game.nextDogId=nextDogId;
 game.reputation++;
-journal("You welcomed your first Local German Shepherd for 500 CFC.");
-save();render();toast("Your first German Shepherd is home!");
+journal("You welcomed your first Local "+breedName(breed)+" ("+d.gender+") for 500 CFC.");
+save();render();toast("Your "+breedName(breed)+" is home!");
 }
+
 function upgradeKennel(){
 if(game.kennelUpgraded){toast("Your kennel is already upgraded.");return}
 if(game.cfc<UPGRADE_COST){toast("You need 300 CFC for the kennel upgrade.",true);return}
@@ -304,16 +381,19 @@ game.reputation++;
 journal("Kennel upgraded! Capacity increased from one dog to three. Cost: 300 CFC.");
 save();render();toast("Kennel upgraded! You can now house three dogs.");
 }
+
 function buyAnotherDog(){
 if(game.dogs.length===0){toast("Buy your first dog first.",true);return}
 if(game.dogs.length>=capacity()){toast("Upgrade your kennel to make more space.",true);return}
 if(game.cfc<DOG_COST){toast("You need 500 CFC to buy another dog.",true);return}
-const name=$("newDogName").value.trim().slice(0,24)||"Shepherd "+(game.dogs.length+1);
+const breed=$("newDogBreed").value;
+if(!BREEDS.some(b=>b.id===breed)){toast("Please choose a valid breed.",true);return}
+const name=$("newDogName").value.trim().slice(0,24)||breedName(breed)+" "+(game.dogs.length+1);
 const gender=$("newDogGender").value;
 game.cfc-=DOG_COST;
-const d=newDog(name,gender);
+const d=newDog(name,gender,breed);
 game.dogs.push(d);game.dog=d;game.nextDogId=nextDogId;game.reputation++;
-journal("You welcomed "+d.name+", a new Local "+d.gender+" German Shepherd, for 500 CFC.");
+journal("You welcomed "+d.name+", a Local "+d.gender+" "+breedName(breed)+", for 500 CFC.");
 $("newDogName").value="";
 save();render();toast(d.name+" has joined your kennel!");
 }
@@ -327,6 +407,7 @@ const old=d.name;d.name=name;
 journal("You renamed "+old+" to "+name+".");
 save();render();toast("Dog renamed to "+name+".");
 }
+
 function care(id,action){
 const d=game.dogs.find(x=>x.id===id);if(!d)return;
 elapsedCare(d);
@@ -351,6 +432,7 @@ d.lastCareAt=Date.now();game.careActions++;
 if(game.careActions%3===0)game.reputation++;
 save();render();toast("Care recorded for "+d.name+".");
 }
+
 function job(id){
 daily();
 if(game.jobs.completed.length>=LIMIT){toast("Today's job limit reached.",true);return}
@@ -360,16 +442,20 @@ game.jobs.completed.push(id);game.jobs.earned+=j.reward;game.cfc+=j.reward;game.
 journal("Job completed: "+j.title+". Earned "+j.reward+" CFC.");
 save();render();toast("You earned "+j.reward+" CFC!");
 }
+
 function statMarkup(d,key,label,value){
 const n=Math.max(0,Math.min(100,Math.round(Number(value)||0)));
 const cls=n<=20?"critical":n<=45?"low":"";
 return '<div class="stat"><div class="stat-top"><span>'+label+'</span><b>'+n+'%</b></div><div class="track"><div class="fill '+cls+'" style="width:'+n+'%"></div></div></div>';
 }
+
 function safeText(s){
 return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
+
 function dogCard(d){
 const age=ageInfo(d);
+const breed=breedName(d.breed);
 let warning="Your dog is doing well. Keep up the care.";
 if(d.health<=30)warning="⚠️ Health is low. A vet check and regular care may help.";
 else if(d.hunger>=90)warning="⚠️ Critical hunger. Feed your dog soon to protect its health.";
@@ -379,7 +465,7 @@ else if(d.energy<=20)warning="Your dog is tired. Let it rest.";
 else if(d.health<70)warning="Your dog needs extra care. Feeding, rest and a vet check can help.";
 
 return '<article class="dog-card">'+
-'<div class="dog-heading"><div class="dog-icon">🐕</div><div style="flex:1;min-width:0"><div class="dog-name">'+safeText(d.name)+'</div><div class="muted">'+safeText(d.bloodline)+' bloodline · '+safeText(d.gender)+'</div><span class="pill">'+age.stage+' · '+age.days+' day(s) old</span></div></div>'+
+'<div class="dog-heading"><div class="dog-icon">🐕</div><div style="flex:1;min-width:0"><div class="dog-name">'+safeText(d.name)+'</div><div class="muted">'+safeText(breed)+' · '+safeText(d.bloodline)+' bloodline · '+safeText(d.gender)+'</div><span class="pill">'+age.stage+' · '+age.days+' day(s) old</span></div></div>'+
 '<label for="rename-'+safeText(d.id)+'">Dog name</label><input id="rename-'+safeText(d.id)+'" maxlength="24" value="'+safeText(d.name)+'" aria-label="Dog name">'+
 '<button class="btn quiet" data-rename="'+safeText(d.id)+'">Save name</button>'+
 '<div class="stats">'+statMarkup(d,"health","❤️ Health",d.health)+statMarkup(d,"energy","⚡ Energy",d.energy)+statMarkup(d,"hunger","🍖 Hunger",d.hunger)+statMarkup(d,"temperament","😊 Temperament",d.temperament)+'</div>'+
@@ -391,11 +477,13 @@ return '<article class="dog-card">'+
 '<button class="btn secondary" data-care="vet" data-id="'+safeText(d.id)+'" '+(game.cfc<VET?'disabled':'')+'>🩺 Vet check<span class="small">30 CFC</span></button>'+
 '</div></article>';
 }
+
 function render(){
 if(!game)return;
 daily();
 game.dogs.forEach(elapsedCare);
 game.dog=game.dogs[game.dogs.length-1]||null;
+
 $("walletBalance").textContent=Math.floor(game.cfc).toLocaleString()+" CFC";
 $("playerName").textContent=game.breederName;
 $("playerState").textContent=game.homeState+", Nigeria";
@@ -405,16 +493,18 @@ $("careCount").textContent=game.careActions;
 $("reputation").textContent=game.reputation;
 $("kennelCapacity").textContent=capacity()+" dog"+(capacity()===1?"":"s");
 $("firstPurchaseCard").classList.toggle("hidden",game.dogs.length>0);
-$("buyFirstDogBtn").disabled=game.cfc<DOG_COST;
+$("buyFirstDogBtn").disabled=game.dogs.length>0||game.cfc<DOG_COST||game.dogs.length>=capacity();
+$("buyFirstDogBtn").textContent=game.cfc<DOG_COST?"Not enough CFC · Need 500":"Buy My First Dog · 500 CFC";
 $("upgradeKennelBtn").disabled=game.kennelUpgraded||game.cfc<UPGRADE_COST;
 $("upgradeKennelBtn").textContent=game.kennelUpgraded?"✓ Kennel upgraded":"Upgrade Kennel · 300 CFC";
 $("kennelDescription").textContent=game.kennelUpgraded?"Your upgraded kennel can house three dogs.":"Your starter kennel can house one dog. Upgrade it to unlock two more spaces.";
 $("upgradeInfo").textContent=game.kennelUpgraded?"Upgrade purchased. Current capacity: 3 dogs.":"Upgrade cost: 300 CFC. Your existing dog and progress will be preserved.";
 $("buyAnotherDogBtn").disabled=game.dogs.length===0||game.dogs.length>=capacity()||game.cfc<DOG_COST;
-$("purchaseNotice").textContent=game.dogs.length===0?"Purchase your first dog before expanding.":game.dogs.length>=capacity()?"Kennel full. Upgrade your kennel to add more dogs.":(capacity()-game.dogs.length)+" kennel space(s) available.";
+$("buyAnotherDogBtn").textContent=game.cfc<DOG_COST?"Not enough CFC · Need 500":"Purchase Dog · 500 CFC";
+$("purchaseNotice").textContent=game.dogs.length===0?"Purchase your first dog before expanding.":game.dogs.length>=capacity()?"Kennel full. Upgrade your kennel to add more dogs.":game.cfc<DOG_COST?"You need 500 CFC. Complete jobs to earn more.":(capacity()-game.dogs.length)+" kennel space(s) available.";
 
 const list=$("dogList");
-list.innerHTML=game.dogs.length?game.dogs.map(dogCard).join(""):'<div class="status">Your kennel is empty. Purchase your first German Shepherd to get started.</div>';
+list.innerHTML=game.dogs.length?game.dogs.map(dogCard).join(""):'<div class="status">Your kennel is empty. Choose a breed and purchase your first dog to get started.</div>';
 
 list.querySelectorAll("[data-rename]").forEach(b=>b.addEventListener("click",()=>renameDog(b.dataset.rename)));
 list.querySelectorAll("[data-care]").forEach(b=>b.addEventListener("click",()=>care(b.dataset.id,b.dataset.care)));
@@ -431,6 +521,7 @@ t.textContent=j.icon+" "+j.title;p.className="muted";p.textContent=j.description
 info.append(t,p);h.append(info,r);c.append(h);
 const b=document.createElement("button");b.className="btn "+(done?"quiet":"secondary");b.textContent=done?"✓ Completed today":limit?"Daily limit reached":"Complete job";b.disabled=done||limit;b.addEventListener("click",()=>job(j.id));c.append(b);jobs.append(c);
 });
+
 $("jobsNotice").textContent=game.jobs.completed.length>=LIMIT?"Daily limit reached. Return tomorrow.":(LIMIT-game.jobs.completed.length)+" job(s) remaining today.";
 
 const log=$("journal");log.replaceChildren();
@@ -442,6 +533,17 @@ const m=document.createElement("div"),t=document.createElement("div");m.textCont
 save();
 }
 
+populateBreedSelect("dogBreed");
+populateBreedSelect("firstPurchaseBreed");
+populateBreedSelect("newDogBreed");
+
+$("dogBreed").addEventListener("change",()=>{
+$("firstPurchaseBreed").value=$("dogBreed").value;
+});
+$("firstPurchaseBreed").addEventListener("change",()=>{
+$("dogBreed").value=$("firstPurchaseBreed").value;
+});
+
 $("setupForm").addEventListener("submit",setup);
 $("buyFirstDogBtn").addEventListener("click",buyFirstDog);
 $("upgradeKennelBtn").addEventListener("click",upgradeKennel);
@@ -449,6 +551,7 @@ $("buyAnotherDogBtn").addEventListener("click",buyAnotherDog);
 
 game=load();
 $("notice").textContent=game?"Saved compound restored from this browser.":"Welcome! Create your breeder profile to begin.";
+
 if(game){
 game.dogs.forEach(elapsedCare);
 game.dog=game.dogs[game.dogs.length-1]||null;
