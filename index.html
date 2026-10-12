@@ -46,12 +46,10 @@ label{display:block;margin:12px 0 5px}input,select{width:100%;min-height:47px;pa
 <label for="dogGender">First dog's gender</label><select id="dogGender"><option>Female</option><option>Male</option></select>
 <div class="status" style="margin-top:12px">Starting wallet: <b class="gold">700 CFC</b><br>First Local German Shepherd: <b>500 CFC</b></div>
 <button class="btn primary">Establish My Compound</button>
-</form>
-</section>
+</form></section>
 
 <div id="gameScreen" class="hidden">
 <section class="card"><div class="wallet"><div><div class="wallet-label">BREEDER WALLET</div><div id="walletBalance" class="balance">700 CFC</div></div><div style="text-align:right">🏡<br><b id="playerName">Breeder</b><div id="playerState" class="muted"></div></div></div></section>
-
 <section id="purchaseCard" class="card"><div class="eyebrow">First investment</div><h2>Welcome to your compound</h2><div class="dog-portrait"><div class="dog-emoji">🐕</div><h3>Local German Shepherd</h3><span class="pill">LOCAL BLOODLINE</span><p class="muted">Your first companion on the road to becoming a respected breeder.</p><b class="gold">500 CFC</b></div><button id="buyDogBtn" class="btn primary">Buy My First Dog · 500 CFC</button></section>
 
 <section id="dogCard" class="card hidden"><div class="eyebrow">Your compound</div>
@@ -63,7 +61,7 @@ label{display:block;margin:12px 0 5px}input,select{width:100%;min-height:47px;pa
 <div class="stat"><div class="stat-top"><span>😊 Temperament</span><b id="temperText"></b></div><div class="track"><div id="temperBar" class="fill"></div></div></div>
 </div>
 <div class="divider"></div><div id="dogStatus" class="status"></div>
-<h3 style="margin-top:16px">Daily care</h3><p class="muted">Needs change with elapsed time. Rest and play are free.</p>
+<h3 style="margin-top:16px">Daily care</h3><p class="muted">Severe hunger or exhaustion can affect health over time. Care for your dog regularly.</p>
 <div class="action-grid">
 <button id="feedBtn" class="btn primary">🍖 Feed<span class="small">25 CFC</span></button>
 <button id="restBtn" class="btn secondary">😴 Rest<span class="small">Free</span></button>
@@ -74,11 +72,9 @@ label{display:block;margin:12px 0 5px}input,select{width:100%;min-height:47px;pa
 
 <section class="card"><div class="eyebrow">Earn your way</div><h2>💼 Jobs board</h2><p class="muted">Complete up to three different jobs each calendar day.</p>
 <div class="wallet"><div><div class="wallet-label">JOBS TODAY</div><b id="jobsToday">0 / 3</b></div><div style="text-align:right"><div class="wallet-label">EARNED TODAY</div><b id="earnedToday" class="gold">0 CFC</b></div></div><div id="jobsList"></div><div id="jobsNotice" class="status" style="margin-top:10px"></div></section>
-
 <section class="card"><h2>📋 Breeder journal</h2><div id="journal"></div></section>
 <section class="card"><h2>🏆 Your progress</h2><div class="wallet"><div><div class="wallet-label">Dogs owned</div><b id="dogCount">0</b></div><div><div class="wallet-label">Care actions</div><b id="careCount">0</b></div><div><div class="wallet-label">Reputation</div><b id="reputation">0</b></div></div><p class="muted">Breeding and the puppy marketplace come in later missions.</p></section>
 </div>
-
 <div id="toast" class="status hidden" role="status" aria-live="polite"></div>
 <footer>Canine Farming · CFC is fictional in-game currency.</footer>
 </main>
@@ -86,7 +82,6 @@ label{display:block;margin:12px 0 5px}input,select{width:100%;min-height:47px;pa
 <script>
 (function(){
 "use strict";
-
 const KEY="canineFarmingSaveV1",DAY=86400000,FEED=25,VET=30,LIMIT=3;
 const JOBS=[
 {id:"walk",title:"Neighbourhood Dog Walk",description:"Exercise a local resident's dog.",reward:45,icon:"🐕"},
@@ -94,7 +89,6 @@ const JOBS=[
 {id:"deliver",title:"Pet Supply Delivery",description:"Deliver pet supplies.",reward:55,icon:"📦"},
 {id:"assist",title:"Assist at a Pet Shop",description:"Help organise pet supplies.",reward:65,icon:"🛍️"}
 ];
-
 const $=id=>document.getElementById(id);
 let game=null,toastTimer=null;
 
@@ -102,31 +96,18 @@ function today(){
 const d=new Date();
 return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")
 }
-
 function toast(m,err=false){
-const e=$("toast");
-e.textContent=m;
-e.style.color=err?"#ff8585":"#c8efd7";
-e.classList.remove("hidden");
-clearTimeout(toastTimer);
-toastTimer=setTimeout(()=>e.classList.add("hidden"),3500)
+const e=$("toast");e.textContent=m;e.style.color=err?"#ff8585":"#c8efd7";e.classList.remove("hidden");
+clearTimeout(toastTimer);toastTimer=setTimeout(()=>e.classList.add("hidden"),3500)
 }
-
 function save(){
-try{
-localStorage.setItem(KEY,JSON.stringify(game));
-return true
-}catch(e){
-$("notice").textContent="Browser storage unavailable. Your progress may not persist.";
-return false
+try{localStorage.setItem(KEY,JSON.stringify(game));return true}
+catch(e){$("notice").textContent="Browser storage unavailable. Your progress may not persist.";return false}
 }
-}
-
 function journal(m){
 game.journal.unshift({message:m,time:new Date().toLocaleString()});
 game.journal=game.journal.slice(0,12)
 }
-
 function load(){
 try{
 const g=JSON.parse(localStorage.getItem(KEY));
@@ -138,12 +119,18 @@ if(!g.jobs||typeof g.jobs!=="object")g.jobs={day:today(),completed:[],earned:0};
 if(g.jobs.day!==today())g.jobs={day:today(),completed:[],earned:0};
 if(!Array.isArray(g.jobs.completed))g.jobs.completed=[];
 if(typeof g.jobs.earned!=="number")g.jobs.earned=0;
+if(g.dog){
+const d=g.dog;
+if(typeof d.health!=="number")d.health=100;
+if(typeof d.energy!=="number")d.energy=100;
+if(typeof d.hunger!=="number")d.hunger=10;
+if(typeof d.temperament!=="number")d.temperament=70;
+if(typeof d.lastCareAt!=="number")d.lastCareAt=Date.now();
+if(typeof d.healthStressHours!=="number")d.healthStressHours=0;
+}
 return g
-}catch(e){
-return null
+}catch(e){return null}
 }
-}
-
 function daily(){
 if(!game.jobs)game.jobs={day:today(),completed:[],earned:0};
 if(game.jobs.day!==today()){
@@ -151,18 +138,31 @@ game.jobs={day:today(),completed:[],earned:0};
 journal("A new day begins. Your job allowance has refreshed.")
 }
 }
-
 function elapsedCare(){
-const d=game&&game.dog;
-if(!d)return;
-const now=Date.now(),last=Number(d.lastCareAt)||now,steps=Math.min(30,Math.floor(Math.max(0,now-last)/3600000));
-if(steps>0){
-d.hunger=Math.min(100,(Number(d.hunger)||0)+steps*3);
-d.energy=Math.max(0,(Number(d.energy)||0)-steps*2);
+const d=game&&game.dog;if(!d)return;
+const now=Date.now(),last=Number(d.lastCareAt)||now;
+const steps=Math.min(30,Math.floor(Math.max(0,now-last)/3600000));
+if(steps<=0)return;
+
+for(let i=0;i<steps;i++){
+d.hunger=Math.min(100,(Number(d.hunger)||0)+3);
+d.energy=Math.max(0,(Number(d.energy)||0)-2);
+
+const stressed=d.hunger>=90||d.energy<=5;
+if(stressed){
+d.healthStressHours=(Number(d.healthStressHours)||0)+1;
+if(d.healthStressHours>=6){
+const oldHealth=d.health;
+d.health=Math.max(1,d.health-2);
+d.healthStressHours=0;
+if(d.health<oldHealth)journal("Your dog's health declined after prolonged severe hunger or exhaustion. Please provide care.")
+}
+}else{
+d.healthStressHours=0
+}
+}
 d.lastCareAt=last+steps*3600000;
 }
-}
-
 function ageInfo(d){
 const age=Math.max(0,Math.floor((Date.now()-(Number(d.bornAt)||Date.now()))/DAY));
 if(age<7)return{days:age,stage:"Puppy"};
@@ -170,7 +170,6 @@ if(age<30)return{days:age,stage:"Adolescent"};
 if(age<365)return{days:age,stage:"Adult"};
 return{days:age,stage:"Senior"}
 }
-
 function setup(event){
 event.preventDefault();
 const name=$("breederName").value.trim().slice(0,24),state=$("stateSelect").value;
@@ -178,31 +177,23 @@ if(!name||!state)return;
 game={version:1,breederName:name,homeState:state,cfc:700,dog:null,careActions:0,reputation:0,journal:[],createdAt:Date.now(),jobs:{day:today(),completed:[],earned:0}};
 journal("Welcome, "+name+"! Your compound is in "+state+".");
 journal("Your starting wallet contains 700 CFC.");
-save();
-screen();
-$("notice").textContent="Your compound is ready.";
-toast("Welcome, breeder!")
+save();screen();$("notice").textContent="Your compound is ready.";toast("Welcome, breeder!")
 }
-
 function screen(){
 const fresh=!game;
 $("setupScreen").classList.toggle("hidden",!fresh);
 $("gameScreen").classList.toggle("hidden",fresh);
 if(!fresh)render()
 }
-
 function buyDog(){
 if(!game||game.dog)return;
 if(game.cfc<500){toast("You need 500 CFC.",true);return}
 game.cfc-=500;
-game.dog={name:"Shepherd",gender:$("dogGender").value||"Female",bloodline:"Local",health:100,energy:100,hunger:10,temperament:70,bornAt:Date.now(),lastCareAt:Date.now()};
+game.dog={name:"Shepherd",gender:$("dogGender").value||"Female",bloodline:"Local",health:100,energy:100,hunger:10,temperament:70,bornAt:Date.now(),lastCareAt:Date.now(),healthStressHours:0};
 game.reputation++;
 journal("You welcomed your first Local German Shepherd for 500 CFC.");
-save();
-render();
-toast("Your first German Shepherd is home!")
+save();render();toast("Your first German Shepherd is home!")
 }
-
 function care(a){
 if(!game||!game.dog)return;
 elapsedCare();
@@ -210,67 +201,47 @@ const d=game.dog;
 if(a==="feed"){
 if(d.hunger<=0){toast("Your dog is not hungry.",true);return}
 if(game.cfc<FEED){toast("Feeding costs 25 CFC.",true);return}
-game.cfc-=FEED;
-d.hunger=Math.max(0,d.hunger-45);
-d.health=Math.min(100,d.health+3);
-d.temperament=Math.min(100,d.temperament+2);
+game.cfc-=FEED;d.hunger=Math.max(0,d.hunger-45);
+d.health=Math.min(100,d.health+3);d.temperament=Math.min(100,d.temperament+2);
+d.healthStressHours=0;
 journal("You fed your dog. Cost: 25 CFC.")
-}
-if(a==="rest"){
-d.energy=Math.min(100,d.energy+30);
-d.health=Math.min(100,d.health+2);
-d.hunger=Math.min(100,d.hunger+5);
+}else if(a==="rest"){
+d.energy=Math.min(100,d.energy+30);d.health=Math.min(100,d.health+2);
+d.hunger=Math.min(100,d.hunger+5);d.healthStressHours=0;
 journal("Your dog rested and recovered energy.")
-}
-if(a==="play"){
+}else if(a==="play"){
 if(d.energy<15){toast("Your dog needs more energy.",true);return}
-d.energy=Math.max(0,d.energy-15);
-d.hunger=Math.min(100,d.hunger+8);
+d.energy=Math.max(0,d.energy-15);d.hunger=Math.min(100,d.hunger+8);
 d.temperament=Math.min(100,d.temperament+8);
 journal("You played with your dog.")
-}
-if(a==="vet"){
+}else if(a==="vet"){
 if(game.cfc<VET){toast("A basic check costs 30 CFC.",true);return}
-game.cfc-=VET;
-d.health=Math.min(100,d.health+15);
-journal("Your dog received a basic health check. Cost: 30 CFC.")
+game.cfc-=VET;d.health=Math.min(100,d.health+25);
+d.healthStressHours=0;
+journal("Your dog received a basic health check and recovery support. Cost: 30 CFC.")
 }
-d.lastCareAt=Date.now();
-game.careActions++;
+d.lastCareAt=Date.now();game.careActions++;
 if(game.careActions%3===0)game.reputation++;
-save();
-render();
-toast("Care recorded.")
+save();render();toast("Care recorded.")
 }
-
 function job(id){
 daily();
 if(game.jobs.completed.length>=LIMIT){toast("Today's job limit reached.",true);return}
 const j=JOBS.find(x=>x.id===id);
 if(!j||game.jobs.completed.includes(id))return;
-game.jobs.completed.push(id);
-game.jobs.earned+=j.reward;
-game.cfc+=j.reward;
-game.reputation++;
+game.jobs.completed.push(id);game.jobs.earned+=j.reward;game.cfc+=j.reward;game.reputation++;
 journal("Job completed: "+j.title+". Earned "+j.reward+" CFC.");
-save();
-render();
-toast("You earned "+j.reward+" CFC!")
+save();render();toast("You earned "+j.reward+" CFC!")
 }
-
 function stat(prefix,val){
 const n=Math.max(0,Math.min(100,Math.round(Number(val)||0)));
 $(prefix+"Text").textContent=n+"%";
-const b=$(prefix+"Bar");
-b.style.width=n+"%";
-b.classList.toggle("low",n<=45&&n>20);
-b.classList.toggle("critical",n<=20)
+const b=$(prefix+"Bar");b.style.width=n+"%";
+b.classList.toggle("low",n<=45&&n>20);b.classList.toggle("critical",n<=20)
 }
-
 function render(){
 if(!game)return;
-daily();
-elapsedCare();
+daily();elapsedCare();
 $("walletBalance").textContent=Math.floor(game.cfc).toLocaleString()+" CFC";
 $("playerName").textContent=game.breederName;
 $("playerState").textContent=game.homeState+", Nigeria";
@@ -287,68 +258,45 @@ $("dogName").textContent=d.name;
 $("dogDetails").textContent=d.bloodline+" bloodline · "+d.gender;
 $("lifeStage").textContent=age.stage;
 $("dogAge").textContent=age.days+" game day(s) old";
-stat("health",d.health);
-stat("energy",d.energy);
-stat("hunger",d.hunger);
-stat("temper",d.temperament);
+stat("health",d.health);stat("energy",d.energy);stat("hunger",d.hunger);stat("temper",d.temperament);
 let s="Your dog is doing well. Keep up the care.";
-if(d.health<=20)s="Your dog's health is very low. Consider a basic check.";
+if(d.health<=30)s="⚠️ Health is low. Use the basic vet check and keep hunger and energy in a safe range.";
+else if(d.hunger>=90)s="⚠️ Critical hunger. Feed your dog soon to help protect its health.";
+else if(d.energy<=5)s="⚠️ Energy is critically low. Let your dog rest to protect its health.";
 else if(d.hunger>=70)s="Your dog is very hungry. Feeding may help.";
 else if(d.energy<=20)s="Your dog is tired. Let it rest.";
+else if(d.health<70)s="Your dog needs extra care. Feeding, rest and a vet check can help.";
 $("dogStatus").textContent=s;
 $("feedBtn").disabled=game.cfc<FEED||d.hunger<=0;
 $("vetBtn").disabled=game.cfc<VET;
 $("playBtn").disabled=d.energy<15;
 }
-
 $("jobsToday").textContent=game.jobs.completed.length+" / "+LIMIT;
 $("earnedToday").textContent=game.jobs.earned+" CFC";
-const list=$("jobsList");
-list.replaceChildren();
-
+const list=$("jobsList");list.replaceChildren();
 JOBS.forEach(j=>{
 const done=game.jobs.completed.includes(j.id),limit=game.jobs.completed.length>=LIMIT,c=document.createElement("div");
 c.className="job";
-const h=document.createElement("div");
-h.className="job-head";
+const h=document.createElement("div");h.className="job-head";
 const info=document.createElement("div"),t=document.createElement("h3"),p=document.createElement("p"),r=document.createElement("b");
-t.textContent=j.icon+" "+j.title;
-p.className="muted";
-p.textContent=j.description;
-r.className="job-reward";
-r.textContent="+"+j.reward+" CFC";
-info.append(t,p);
-h.append(info,r);
-c.append(h);
-const b=document.createElement("button");
-b.className="btn "+(done?"quiet":"secondary");
+t.textContent=j.icon+" "+j.title;p.className="muted";p.textContent=j.description;
+r.className="job-reward";r.textContent="+"+j.reward+" CFC";
+info.append(t,p);h.append(info,r);c.append(h);
+const b=document.createElement("button");b.className="btn "+(done?"quiet":"secondary");
 b.textContent=done?"✓ Completed today":limit?"Daily limit reached":"Complete job";
-b.disabled=done||limit;
-b.addEventListener("click",()=>job(j.id));
-c.append(b);
-list.append(c)
+b.disabled=done||limit;b.addEventListener("click",()=>job(j.id));c.append(b);list.append(c)
 });
-
 $("jobsNotice").textContent=game.jobs.completed.length>=LIMIT?"Daily limit reached. Return tomorrow.":(LIMIT-game.jobs.completed.length)+" job(s) remaining today.";
-const log=$("journal");
-log.replaceChildren();
-if(!game.journal.length){
-log.textContent="Your story will appear here."
-}else{
-game.journal.forEach(x=>{
-const e=document.createElement("div");
-e.className="log-item";
+const log=$("journal");log.replaceChildren();
+if(!game.journal.length){log.textContent="Your story will appear here."}
+else game.journal.forEach(x=>{
+const e=document.createElement("div");e.className="log-item";
 const m=document.createElement("div"),t=document.createElement("div");
-m.textContent=x.message;
-t.className="muted";
-t.textContent=x.time||"";
-e.append(m,t);
-log.append(e)
-})
-}
+m.textContent=x.message;t.className="muted";t.textContent=x.time||"";
+e.append(m,t);log.append(e)
+});
 save()
 }
-
 $("setupForm").addEventListener("submit",setup);
 $("buyDogBtn").addEventListener("click",buyDog);
 $("feedBtn").addEventListener("click",()=>care("feed"));
@@ -359,12 +307,7 @@ $("vetBtn").addEventListener("click",()=>care("vet"));
 game=load();
 $("notice").textContent=game?"Saved compound restored from this browser.":"Welcome! Create your breeder profile to begin.";
 screen();
-
-if(game&&game.dog){
-elapsedCare();
-save();
-render()
-}
+if(game&&game.dog){elapsedCare();save();render()}
 
 setInterval(()=>{
 if(game&&game.dog){
@@ -372,11 +315,9 @@ const oldStage=ageInfo(game.dog).stage;
 elapsedCare();
 const newStage=ageInfo(game.dog).stage;
 if(oldStage!==newStage)journal("Your dog has entered the "+newStage+" life stage.");
-save();
-render()
+save();render()
 }
 },60000);
-
 })();
 </script>
 </body>
