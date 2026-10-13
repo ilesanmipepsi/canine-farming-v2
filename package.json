@@ -1,3 +1,4 @@
+
 {
   "name": "canine-farming-game",
   "version": "1.0.0",
@@ -5,6 +6,9 @@
   "scripts": {
     "dev": "echo \"Static site - open index.html\"",
     "build": "echo \"No build needed\""
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.2.0"
   },
   "engines": {
     "node": "24.x"
