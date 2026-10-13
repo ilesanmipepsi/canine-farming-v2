@@ -1,5 +1,4 @@
-```javascript
-export default function handler(req, res) {
+module.exports = function handler(req, res) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader("Cache-Control", "no-store");
 
@@ -16,5 +15,4 @@ export default function handler(req, res) {
     service: "canine-farming-api",
     status: "healthy"
   });
-}
-```
+};
