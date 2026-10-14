@@ -28,11 +28,24 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const body = req.body;
+    let body = req.body;
+
+    if (typeof body === "string") {
+      try {
+        body = JSON.parse(body);
+      } catch {
+        return res.status(400).json({
+          ok: false,
+          error: "Invalid JSON body"
+        });
+      }
+    }
+
     const session =
       body && typeof body.session === "string"
         ? body.session
         : "";
+
     const purchaseId =
       body && typeof body.purchaseId === "string"
         ? body.purchaseId
@@ -41,7 +54,7 @@ module.exports = async function handler(req, res) {
     if (
       !session ||
       session.length > 10000 ||
-      !/^[a-fA-F0-9]{16,128}$/.test(purchaseId)
+      !/^[a-zA-Z0-9_-]{8,128}$/.test(purchaseId)
     ) {
       return res.status(400).json({
         ok: false,
@@ -54,7 +67,7 @@ module.exports = async function handler(req, res) {
       "Content-Type": "application/json"
     };
 
-    // Verify the player's current Vatar session.
+    // Step 1: Verify the Vatar session.
     const sessionResponse = await fetch(
       `${VATAR_API}/session/verify`,
       {
@@ -77,17 +90,18 @@ module.exports = async function handler(req, res) {
       player.mode !== "test" ||
       typeof player.playerId !== "string" ||
       !player.playerId ||
+      typeof player.gameId !== "string" ||
       !player.gameId
     ) {
       return res.status(403).json({
         ok: false,
-        error: "Test session required"
+        error: "A valid test session is required"
       });
     }
 
-    // Retrieve the purchase directly from Vatar.
+    // Step 2: Verify the purchase directly with Vatar.
     const purchaseResponse = await fetch(
-      `${VATAR_API}/purchases/${purchaseId}`,
+      `${VATAR_API}/purchases/${encodeURIComponent(purchaseId)}`,
       { headers }
     );
 
@@ -111,16 +125,15 @@ module.exports = async function handler(req, res) {
     ) {
       return res.status(409).json({
         ok: false,
-        error: "Purchase does not match this reward"
+        error: "Purchase does not match this test reward"
       });
     }
 
     const sql = neon(databaseUrl);
 
-    // One atomic statement:
-    // a new purchase creates one grant and credits one wallet.
-    // A repeated purchase ID cannot credit the wallet again.
-    const result = await sql`
+    // Step 3: Atomically create a unique grant and credit
+    // the server-side wallet only when that grant is new.
+    const grantResult = await sql`
       WITH new_grant AS (
         INSERT INTO public.vatar_cfc_grants (
           vatar_purchase_id,
@@ -139,7 +152,7 @@ module.exports = async function handler(req, res) {
         ON CONFLICT (vatar_purchase_id) DO NOTHING
         RETURNING player_id, cfc_amount
       ),
-      credit AS (
+      wallet_credit AS (
         INSERT INTO public.vatar_cfc_wallets (
           player_id,
           purchased_cfc,
@@ -158,14 +171,16 @@ module.exports = async function handler(req, res) {
           updated_at = NOW()
         RETURNING player_id
       )
-      SELECT
-        EXISTS (SELECT 1 FROM new_grant) AS newly_granted,
-        EXISTS (SELECT 1 FROM credit) AS wallet_credited
+      SELECT EXISTS (
+        SELECT 1 FROM new_grant
+      ) AS newly_granted
     `;
 
-    const newlyGranted = result[0]?.newly_granted === true;
+    const newlyGranted =
+      grantResult[0]?.newly_granted === true;
 
-    // Confirm the existing record belongs to this same player/product.
+    // Step 4: Confirm that any existing grant belongs
+    // to this exact player and product.
     const existing = await sql`
       SELECT player_id, product_id, cfc_amount, status
       FROM public.vatar_cfc_grants
@@ -179,7 +194,8 @@ module.exports = async function handler(req, res) {
       !grant ||
       grant.player_id !== player.playerId ||
       grant.product_id !== PRODUCT_ID ||
-      Number(grant.cfc_amount) !== CFC_REWARD
+      Number(grant.cfc_amount) !== CFC_REWARD ||
+      grant.status === "rejected"
     ) {
       return res.status(409).json({
         ok: false,
@@ -187,12 +203,11 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    // Tell Vatar the purchase has been delivered.
-    // If this call fails, the grant remains recorded.
-    // A retry won't credit the same purchase twice.
+    // Step 5: Ask Vatar to mark the purchase delivered.
+    // A retry cannot credit the same purchase a second time.
     if (purchase.status === "paid") {
       const deliveryResponse = await fetch(
-        `${VATAR_API}/purchases/${purchaseId}/deliver`,
+        `${VATAR_API}/purchases/${encodeURIComponent(purchaseId)}/deliver`,
         {
           method: "POST",
           headers
@@ -214,8 +229,20 @@ module.exports = async function handler(req, res) {
           AND player_id = ${player.playerId}
           AND product_id = ${PRODUCT_ID}
       `;
+    } else if (grant.status !== "delivered") {
+      // Vatar already reports delivery, so synchronize our
+      // record without issuing another wallet credit.
+      await sql`
+        UPDATE public.vatar_cfc_grants
+        SET status = 'delivered',
+            delivered_at = COALESCE(delivered_at, NOW())
+        WHERE vatar_purchase_id = ${purchaseId}
+          AND player_id = ${player.playerId}
+          AND product_id = ${PRODUCT_ID}
+      `;
     }
 
+    // Step 6: Return the server-side purchased balance.
     const wallet = await sql`
       SELECT purchased_cfc
       FROM public.vatar_cfc_wallets
