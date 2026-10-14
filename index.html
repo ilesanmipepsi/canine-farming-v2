@@ -172,7 +172,7 @@ footer{text-align:center;color:#86a795;font-size:.76rem;padding:12px}
  * Lagos Life Vatar integration:
  * - SDK initialization is guarded so ordinary browser visits still work.
  * - Pause/resume only gates this game's periodic care timer.
- * - No purchases or paid CFC grants are enabled in this client-only release.
+ * - Purchase restore/claim runs only in Vatar test mode when the SDK exposes purchases().
  */
 let vatarPaused=false;
 let vatarPlayer=null;
@@ -207,18 +207,93 @@ vatarStatus="init-failed";
 console.warn("Vatar initialization failed; standalone game remains available.",error);
 }
 }
-function handleVatarInit(result){
-if(result&&typeof result==="object"){
-vatarPlayer=result.player||null;
-vatarSession=result.session||null;
-vatarMode=result.mode||null;
-vatarStatus="initialized";
-console.info("Vatar SDK initialized.",{playerAvailable:!!vatarPlayer,mode:vatarMode});
-}else{
-vatarStatus="init-returned-no-session";
-console.warn("Vatar init returned no usable result.");
+
+function handleVatarInit(result) {
+  if (result && typeof result === "object") {
+    vatarPlayer = result.player || null;
+    vatarSession = result.session || null;
+    vatarMode = result.mode || null;
+    vatarStatus = "initialized";
+
+    console.info("Vatar SDK initialized.", {
+      playerAvailable: !!vatarPlayer,
+      mode: vatarMode
+    });
+
+    if (
+      vatarSession &&
+      vatarMode === "test" &&
+      window.Vatar &&
+      typeof window.Vatar.purchases === "function"
+    ) {
+      restoreVatarPurchases();
+    }
+  } else {
+    vatarStatus = "init-returned-no-session";
+    console.warn("Vatar init returned no usable result.");
+  }
 }
+
+async function restoreVatarPurchases() {
+  try {
+    const purchases = await window.Vatar.purchases();
+
+    if (!Array.isArray(purchases)) {
+      console.warn("Vatar returned an unexpected purchases response.");
+      return;
+    }
+
+    for (const purchase of purchases) {
+      if (
+        purchase &&
+        typeof purchase.purchaseId === "string" &&
+        purchase.productId === "cfc_starter_pack"
+      ) {
+        await claimVatarPurchase(purchase.purchaseId);
+      }
+    }
+  } catch (error) {
+    console.warn("Could not restore pending Vatar purchases.", error);
+  }
 }
+
+async function claimVatarPurchase(purchaseId) {
+  if (!vatarSession || vatarMode !== "test") {
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/claim", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        session: vatarSession,
+        purchaseId: purchaseId
+      })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.ok) {
+      console.warn("Vatar purchase claim was not completed.", result.error);
+      return;
+    }
+
+    console.info("Vatar purchase claim confirmed.", {
+      newlyGranted: result.newlyGranted,
+      rewardCfc: result.rewardCfc,
+      purchasedCfc: result.purchasedCfc
+    });
+
+    $("notice").textContent =
+      "Purchase verified. Your reward is recorded on the server.";
+  } catch (error) {
+    console.warn("Vatar purchase claim failed; it can be retried.", error);
+  }
+}
+
 initializeVatar();
 
 const KEY="canineFarmingSaveV1",DAY=86400000,FEED=25,VET=30,LIMIT=3,UPGRADE_COST=300,DOG_COST=500;
@@ -559,4 +634,4 @@ render();
 })();
 </script>
 </body>
-                                                                                                                                                                                                                                                                                                                                                           </html>
+  </html>
