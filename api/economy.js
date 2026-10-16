@@ -109,6 +109,16 @@ module.exports = async function handler(req, res) {
         FROM locked l
         WHERE w.player_id = l.player_id
           AND ( ${delta} > 0 OR w.balance >= ${config.amount} )
+          AND (
+            ${config.type !== "earn"} OR
+            (
+              SELECT COUNT(*)
+              FROM public.cfc_transactions t
+              WHERE t.player_id = w.player_id
+                AND t.action LIKE 'job_%'
+                AND t.created_at >= date_trunc('day', NOW())
+            ) < ${config.dailyLimit || 999999}
+          )
         RETURNING w.player_id, w.balance
       ),
       recorded AS (
