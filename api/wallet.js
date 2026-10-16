@@ -17,7 +17,6 @@ async function verifySession(session, secret) {
   if (!response.ok) return null;
   const player = await response.json();
   if (
-    player.mode !== "test" ||
     typeof player.playerId !== "string" ||
     !player.playerId ||
     typeof player.gameId !== "string" ||
@@ -54,7 +53,10 @@ module.exports = async function handler(req, res) {
     }
 
     const player = await verifySession(session, secret);
-    if (!player) return send(res, 401, { ok: false, error: "Valid Vatar test session required." });
+    if (!player) return send(res, 401, { ok: false, error: "Vatar session verification failed." });
+    if (player.mode !== "test") {
+      return send(res, 403, { ok: false, error: "Valid Vatar test session required." });
+    }
 
     const sql = neon(databaseUrl);
     const rows = await sql`
