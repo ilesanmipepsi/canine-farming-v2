@@ -19,6 +19,23 @@ ALTER TABLE public.cfc_wallets
 ALTER TABLE public.cfc_wallets
   ADD COLUMN IF NOT EXISTS daily_jobs_count INTEGER NOT NULL DEFAULT 0;
 
+-- Ensure the same invariant also applies when these columns predate this script.
+DO $
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'cfc_wallets_daily_jobs_count_range'
+      AND conrelid = 'public.cfc_wallets'::regclass
+  ) THEN
+    ALTER TABLE public.cfc_wallets
+      ADD CONSTRAINT cfc_wallets_daily_jobs_count_range
+      CHECK (daily_jobs_count >= 0 AND daily_jobs_count <= 3) NOT VALID;
+  END IF;
+END $;
+
+ALTER TABLE public.cfc_wallets
+  VALIDATE CONSTRAINT cfc_wallets_daily_jobs_count_range;
+
 CREATE TABLE IF NOT EXISTS public.cfc_transactions (
   id BIGSERIAL PRIMARY KEY,
   player_id TEXT NOT NULL REFERENCES public.cfc_wallets(player_id),
