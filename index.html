@@ -325,7 +325,7 @@ console.error("CFC test purchase claim failed.",error);
 setCfcPackStatus("Claim could not finish. Reopen the game and retry the pending purchase.",true);
 }finally{claimsInProgress.delete(purchaseId);}
 }
-async async function startCfcPackPurchase(){
+async function startCfcPackPurchase(){
 if(!window.Vatar||typeof window.Vatar.purchase!=="function"){
 setCfcPackStatus("Open Canine Farming inside Vatar to use test purchases.",true);return;
 }
