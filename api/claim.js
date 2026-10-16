@@ -5,15 +5,19 @@ const PRODUCT_ID = "cfc_starter_pack";
 const PRICE_NAIRA = 100;
 const CFC_REWARD = 1000;
 
+function send(res, status, payload) {
+  return res.status(status).json(payload);
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader("Cache-Control", "no-store");
 
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
-    return res.status(405).json({
+    return send(res, 405, {
       ok: false,
-      error: "Method not allowed"
+      error: "Method not allowed."
     });
   }
 
@@ -21,9 +25,9 @@ module.exports = async function handler(req, res) {
   const databaseUrl = process.env.POSTGRES_URL;
 
   if (!secret || !databaseUrl) {
-    return res.status(503).json({
+    return send(res, 503, {
       ok: false,
-      error: "Server configuration incomplete"
+      error: "Purchase verification is not configured."
     });
   }
 
@@ -34,9 +38,9 @@ module.exports = async function handler(req, res) {
       try {
         body = JSON.parse(body);
       } catch {
-        return res.status(400).json({
+        return send(res, 400, {
           ok: false,
-          error: "Invalid JSON body"
+          error: "Invalid JSON body."
         });
       }
     }
@@ -56,9 +60,9 @@ module.exports = async function handler(req, res) {
       session.length > 10000 ||
       !/^[a-zA-Z0-9_-]{8,128}$/.test(purchaseId)
     ) {
-      return res.status(400).json({
+      return send(res, 400, {
         ok: false,
-        error: "Invalid request"
+        error: "A valid session and purchase ID are required."
       });
     }
 
@@ -67,7 +71,7 @@ module.exports = async function handler(req, res) {
       "Content-Type": "application/json"
     };
 
-    // Step 1: Verify the Vatar session.
+    // Verify the player's session with Vatar.
     const sessionResponse = await fetch(
       `${VATAR_API}/session/verify`,
       {
@@ -78,9 +82,9 @@ module.exports = async function handler(req, res) {
     );
 
     if (!sessionResponse.ok) {
-      return res.status(401).json({
+      return send(res, 401, {
         ok: false,
-        error: "Session verification failed"
+        error: "Vatar session verification failed."
       });
     }
 
@@ -93,22 +97,22 @@ module.exports = async function handler(req, res) {
       typeof player.gameId !== "string" ||
       !player.gameId
     ) {
-      return res.status(403).json({
+      return send(res, 403, {
         ok: false,
-        error: "A valid test session is required"
+        error: "This session is not a valid test-game session."
       });
     }
 
-    // Step 2: Verify the purchase directly with Vatar.
+    // Ask Vatar to verify the purchase.
     const purchaseResponse = await fetch(
       `${VATAR_API}/purchases/${encodeURIComponent(purchaseId)}`,
       { headers }
     );
 
     if (!purchaseResponse.ok) {
-      return res.status(409).json({
+      return send(res, 409, {
         ok: false,
-        error: "Purchase could not be verified"
+        error: "Purchase could not be verified."
       });
     }
 
@@ -118,93 +122,119 @@ module.exports = async function handler(req, res) {
       purchase.id !== purchaseId ||
       purchase.playerId !== player.playerId ||
       purchase.productId !== PRODUCT_ID ||
-      purchase.amount !== PRICE_NAIRA ||
+      Number(purchase.amount) !== PRICE_NAIRA ||
       purchase.currency !== "NGN" ||
-      purchase.mode !== "test" ||
-      !["paid", "delivered"].includes(purchase.status)
+      purchase.mode !== "test"
     ) {
-      return res.status(409).json({
+      return send(res, 409, {
         ok: false,
-        error: "Purchase does not match this test reward"
+        error: "Purchase details do not match this offer and player."
+      });
+    }
+
+    if (purchase.status === "refunded") {
+      return send(res, 409, {
+        ok: false,
+        error: "Refunded purchases cannot receive CFC."
+      });
+    }
+
+    if (!["paid", "delivered"].includes(purchase.status)) {
+      return send(res, 409, {
+        ok: false,
+        error: "Purchase is not paid."
       });
     }
 
     const sql = neon(databaseUrl);
 
-    // Step 3: Atomically create a unique grant and credit
-    // the server-side wallet only when that grant is new.
-    const grantResult = await sql`
-      WITH new_grant AS (
-        INSERT INTO public.vatar_cfc_grants (
-          vatar_purchase_id,
-          player_id,
-          product_id,
-          cfc_amount,
-          status
-        )
-        VALUES (
-          ${purchaseId},
-          ${player.playerId},
-          ${PRODUCT_ID},
-          ${CFC_REWARD},
-          'verified'
-        )
-        ON CONFLICT (vatar_purchase_id) DO NOTHING
-        RETURNING player_id, cfc_amount
-      ),
-      wallet_credit AS (
-        INSERT INTO public.vatar_cfc_wallets (
-          player_id,
-          purchased_cfc,
-          updated_at
-        )
-        SELECT
-          player_id,
-          cfc_amount,
-          NOW()
-        FROM new_grant
-        ON CONFLICT (player_id)
-        DO UPDATE SET
-          purchased_cfc =
-            public.vatar_cfc_wallets.purchased_cfc
-            + EXCLUDED.purchased_cfc,
-          updated_at = NOW()
-        RETURNING player_id
-      )
-      SELECT EXISTS (
-        SELECT 1 FROM new_grant
-      ) AS newly_granted
-    `;
-
-    const newlyGranted =
-      grantResult[0]?.newly_granted === true;
-
-    // Step 4: Confirm that any existing grant belongs
-    // to this exact player and product.
-    const existing = await sql`
+    // A delivered purchase must already have our grant record.
+    const existingRows = await sql`
       SELECT player_id, product_id, cfc_amount, status
       FROM public.vatar_cfc_grants
       WHERE vatar_purchase_id = ${purchaseId}
       LIMIT 1
     `;
 
-    const grant = existing[0];
+    let grant = existingRows[0];
+    let newlyGranted = false;
 
-    if (
-      !grant ||
-      grant.player_id !== player.playerId ||
-      grant.product_id !== PRODUCT_ID ||
-      Number(grant.cfc_amount) !== CFC_REWARD ||
-      grant.status === "rejected"
-    ) {
-      return res.status(409).json({
+    if (purchase.status === "delivered" && !grant) {
+      return send(res, 409, {
         ok: false,
-        error: "Purchase grant conflict"
+        error:
+          "Purchase is already delivered but no matching grant record exists. Manual review is required."
       });
     }
 
-    // Step 5: Ask Vatar to mark the purchase delivered.
-    // A retry cannot credit the same purchase a second time.
+    if (grant) {
+      if (
+        grant.player_id !== player.playerId ||
+        grant.product_id !== PRODUCT_ID ||
+        Number(grant.cfc_amount) !== CFC_REWARD ||
+        grant.status === "rejected"
+      ) {
+        return send(res, 409, {
+          ok: false,
+          error: "Purchase conflicts with the existing grant record."
+        });
+      }
+    } else {
+      // The unique purchase ID prevents duplicate wallet credits.
+      const grantResult = await sql`
+        WITH new_grant AS (
+          INSERT INTO public.vatar_cfc_grants
+            (vatar_purchase_id, player_id, product_id, cfc_amount, status)
+          VALUES
+            (${purchaseId}, ${player.playerId}, ${PRODUCT_ID},
+             ${CFC_REWARD}, 'verified')
+          ON CONFLICT (vatar_purchase_id) DO NOTHING
+          RETURNING player_id, cfc_amount
+        ),
+        wallet_credit AS (
+          INSERT INTO public.vatar_cfc_wallets
+            (player_id, purchased_cfc, updated_at)
+          SELECT player_id, cfc_amount, NOW()
+          FROM new_grant
+          ON CONFLICT (player_id) DO UPDATE
+          SET purchased_cfc =
+                public.vatar_cfc_wallets.purchased_cfc
+                + EXCLUDED.purchased_cfc,
+              updated_at = NOW()
+          RETURNING player_id
+        )
+        SELECT EXISTS (
+          SELECT 1 FROM new_grant
+        ) AS newly_granted
+      `;
+
+      const confirmedRows = await sql`
+        SELECT player_id, product_id, cfc_amount, status
+        FROM public.vatar_cfc_grants
+        WHERE vatar_purchase_id = ${purchaseId}
+        LIMIT 1
+      `;
+
+      grant = confirmedRows[0];
+
+      if (
+        !grant ||
+        grant.player_id !== player.playerId ||
+        grant.product_id !== PRODUCT_ID ||
+        Number(grant.cfc_amount) !== CFC_REWARD ||
+        grant.status === "rejected"
+      ) {
+        return send(res, 409, {
+          ok: false,
+          error: "Purchase conflicts with an existing grant record."
+        });
+      }
+
+      newlyGranted =
+        grantResult[0]?.newly_granted === true;
+    }
+
+    // Retry delivery safely if Vatar still reports "paid".
     if (purchase.status === "paid") {
       const deliveryResponse = await fetch(
         `${VATAR_API}/purchases/${encodeURIComponent(purchaseId)}/deliver`,
@@ -215,52 +245,47 @@ module.exports = async function handler(req, res) {
       );
 
       if (!deliveryResponse.ok) {
-        return res.status(503).json({
+        return send(res, 503, {
           ok: false,
-          error: "Reward recorded; delivery confirmation pending"
+          error:
+            "CFC grant is recorded, but Vatar delivery is pending. Retry this claim.",
+          retryable: true
         });
       }
-
-      await sql`
-        UPDATE public.vatar_cfc_grants
-        SET status = 'delivered',
-            delivered_at = COALESCE(delivered_at, NOW())
-        WHERE vatar_purchase_id = ${purchaseId}
-          AND player_id = ${player.playerId}
-          AND product_id = ${PRODUCT_ID}
-      `;
-    } else if (grant.status !== "delivered") {
-      // Vatar already reports delivery, so synchronize our
-      // record without issuing another wallet credit.
-      await sql`
-        UPDATE public.vatar_cfc_grants
-        SET status = 'delivered',
-            delivered_at = COALESCE(delivered_at, NOW())
-        WHERE vatar_purchase_id = ${purchaseId}
-          AND player_id = ${player.playerId}
-          AND product_id = ${PRODUCT_ID}
-      `;
     }
 
-    // Step 6: Return the server-side purchased balance.
-    const wallet = await sql`
+    await sql`
+      UPDATE public.vatar_cfc_grants
+      SET status = 'delivered',
+          delivered_at = COALESCE(delivered_at, NOW())
+      WHERE vatar_purchase_id = ${purchaseId}
+        AND player_id = ${player.playerId}
+        AND product_id = ${PRODUCT_ID}
+        AND status <> 'rejected'
+    `;
+
+    const walletRows = await sql`
       SELECT purchased_cfc
       FROM public.vatar_cfc_wallets
       WHERE player_id = ${player.playerId}
       LIMIT 1
     `;
 
-    return res.status(200).json({
+    return send(res, 200, {
       ok: true,
       newlyGranted,
       rewardCfc: CFC_REWARD,
-      purchasedCfc: Number(wallet[0]?.purchased_cfc ?? 0),
+      purchasedCfc: Number(
+        walletRows[0]?.purchased_cfc ?? 0
+      ),
       productId: PRODUCT_ID
     });
   } catch {
-    return res.status(503).json({
+    // Never expose internal errors, database URLs, or secrets.
+    return send(res, 503, {
       ok: false,
-      error: "Purchase claim could not be completed"
+      error:
+        "Purchase claim could not be completed. Please retry."
     });
   }
 };
