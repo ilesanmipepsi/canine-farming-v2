@@ -29,8 +29,10 @@ async function verifySession(session, secret) {
 module.exports = async function handler(req, res) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader("Cache-Control", "no-store");
-  if (req.method !== "GET" && req.method !== "POST") {
-    res.setHeader("Allow", "GET, POST");
+  // POST keeps the short-lived Vatar session out of URLs, browser history,
+  // analytics, and proxy access logs. This endpoint is not wired into the UI yet.
+  if (req.method !== "POST") {
+    res.setHeader("Allow", "POST");
     return send(res, 405, { ok: false, error: "Method not allowed." });
   }
 
@@ -46,9 +48,7 @@ module.exports = async function handler(req, res) {
       try { body = JSON.parse(body); }
       catch { return send(res, 400, { ok: false, error: "Invalid JSON body." }); }
     }
-    const session = req.method === "GET"
-      ? (typeof req.query?.session === "string" ? req.query.session : "")
-      : (typeof body?.session === "string" ? body.session : "");
+    const session = typeof body?.session === "string" ? body.session : "";
     if (!session || session.length > 10000) {
       return send(res, 400, { ok: false, error: "A valid Vatar session is required." });
     }
