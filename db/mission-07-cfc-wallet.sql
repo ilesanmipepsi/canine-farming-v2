@@ -20,7 +20,7 @@ ALTER TABLE public.cfc_wallets
   ADD COLUMN IF NOT EXISTS daily_jobs_count INTEGER NOT NULL DEFAULT 0;
 
 -- Ensure the same invariant also applies when these columns predate this script.
-DO $
+DO $constraint$
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint
@@ -31,7 +31,7 @@ BEGIN
       ADD CONSTRAINT cfc_wallets_daily_jobs_count_range
       CHECK (daily_jobs_count >= 0 AND daily_jobs_count <= 3) NOT VALID;
   END IF;
-END $;
+END $constraint$;
 
 ALTER TABLE public.cfc_wallets
   VALIDATE CONSTRAINT cfc_wallets_daily_jobs_count_range;
