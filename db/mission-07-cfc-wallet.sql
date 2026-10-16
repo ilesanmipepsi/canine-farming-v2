@@ -1,5 +1,5 @@
 -- Mission 07: server-authoritative CFC wallet
--- Run against the project's Neon database before enabling economy API routes.
+-- Apply in Preview only after reviewing the migration plan.
 CREATE TABLE IF NOT EXISTS public.cfc_wallets (
   player_id TEXT PRIMARY KEY,
   balance BIGINT NOT NULL DEFAULT 0 CHECK (balance >= 0),
@@ -7,9 +7,17 @@ CREATE TABLE IF NOT EXISTS public.cfc_wallets (
   status TEXT NOT NULL DEFAULT 'migration_required'
     CHECK (status IN ('migration_required', 'active', 'restricted')),
   version INTEGER NOT NULL DEFAULT 1,
+  daily_jobs_date DATE,
+  daily_jobs_count INTEGER NOT NULL DEFAULT 0 CHECK (daily_jobs_count >= 0 AND daily_jobs_count <= 3),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Idempotent additions for environments where the initial table already exists.
+ALTER TABLE public.cfc_wallets
+  ADD COLUMN IF NOT EXISTS daily_jobs_date DATE;
+ALTER TABLE public.cfc_wallets
+  ADD COLUMN IF NOT EXISTS daily_jobs_count INTEGER NOT NULL DEFAULT 0;
 
 CREATE TABLE IF NOT EXISTS public.cfc_transactions (
   id BIGSERIAL PRIMARY KEY,
