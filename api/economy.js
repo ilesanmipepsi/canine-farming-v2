@@ -1,8 +1,6 @@
 const { neon } = require("@neondatabase/serverless");
 const VATAR_API = "https://lagoslife.app/api/games/v1";
 
-// Only server-defined actions are accepted. Clients never submit a balance,
-// reward amount, price, or resulting balance.
 const ACTIONS = Object.freeze({
   job_walk: { type: "earn", amount: 45, dailyLimit: 3 },
   job_clean: { type: "earn", amount: 35, dailyLimit: 3 },
@@ -61,11 +59,9 @@ module.exports = async function handler(req, res) {
 
     const sql = neon(databaseUrl);
     const config = ACTIONS[action];
-    // This route intentionally refuses to mutate un-migrated wallets.
-    // No browser balance is trusted or imported here.
     const existing = await sql`
-      SELECT balance, purchased_balance, status
-      FROM public.cfc_wallets WHERE player_id = ${player.playerId} LIMIT 1
+      SELECT status FROM public.cfc_wallets
+      WHERE player_id = ${player.playerId} LIMIT 1
     `;
     if (!existing[0] || existing[0].status !== "active") {
       return send(res, 409, {
@@ -75,7 +71,6 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    // Idempotent replay returns the original transaction, never pays twice.
     const replay = await sql`
       SELECT action, amount, balance_after
       FROM public.cfc_transactions
@@ -93,31 +88,35 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    // The balance lock and transaction record are handled by a single SQL
-    // statement so concurrent requests cannot overspend or double-credit.
+    const isJob = config.dailyLimit !== undefined;
     const delta = config.type === "earn" ? config.amount : -config.amount;
+
+    // The wallet row itself stores the daily job counter. Its conditional
+    // UPDATE is atomic, so parallel job requests cannot exceed the daily cap.
+    // A unique ledger key prevents duplicate credits; concurrent retries that
+    // race on that key should retry using the same key after a transient error.
     const rows = await sql`
-      WITH locked AS (
-        SELECT player_id, balance
-        FROM public.cfc_wallets
-        WHERE player_id = ${player.playerId} AND status = 'active'
-        FOR UPDATE
-      ),
-      applied AS (
+      WITH applied AS (
         UPDATE public.cfc_wallets w
-        SET balance = w.balance + ${delta}, updated_at = NOW(), version = version + 1
-        FROM locked l
-        WHERE w.player_id = l.player_id
-          AND ( ${delta} > 0 OR w.balance >= ${config.amount} )
+        SET balance = w.balance + ${delta},
+            daily_jobs_count = CASE
+              WHEN ${isJob} THEN
+                CASE WHEN w.daily_jobs_date = CURRENT_DATE
+                     THEN w.daily_jobs_count + 1 ELSE 1 END
+              ELSE w.daily_jobs_count
+            END,
+            daily_jobs_date = CASE
+              WHEN ${isJob} THEN CURRENT_DATE ELSE w.daily_jobs_date
+            END,
+            updated_at = NOW(),
+            version = w.version + 1
+        WHERE w.player_id = ${player.playerId}
+          AND w.status = 'active'
+          AND (${delta} > 0 OR w.balance >= ${config.amount})
           AND (
-            ${config.type !== "earn"} OR
-            (
-              SELECT COUNT(*)
-              FROM public.cfc_transactions t
-              WHERE t.player_id = w.player_id
-                AND t.action LIKE 'job_%'
-                AND t.created_at >= date_trunc('day', NOW())
-            ) < ${config.dailyLimit || 999999}
+            NOT ${isJob} OR
+            (CASE WHEN w.daily_jobs_date = CURRENT_DATE
+                  THEN w.daily_jobs_count ELSE 0 END) < ${config.dailyLimit || 999999}
           )
         RETURNING w.player_id, w.balance
       ),
@@ -132,7 +131,12 @@ module.exports = async function handler(req, res) {
       SELECT amount, balance_after FROM recorded
     `;
     if (!rows[0]) {
-      return send(res, 409, { ok: false, error: "Insufficient CFC or wallet changed. Refresh and retry." });
+      return send(res, 409, {
+        ok: false,
+        error: isJob
+          ? "Daily job limit reached or wallet unavailable. Refresh and retry."
+          : "Insufficient CFC or wallet changed. Refresh and retry."
+      });
     }
     return send(res, 200, {
       ok: true, replayed: false, action,
