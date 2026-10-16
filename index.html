@@ -267,9 +267,8 @@ setCfcPackStatus("Vatar session is unavailable. Reopen the game inside Vatar.",t
 if(vatarMode!=="test"){
 setCfcPackStatus("This offer is available in Vatar test mode only.",true);return;
 }
-if(getAppliedPurchaseIds().includes(purchaseId)){
-setCfcPackStatus("This purchase was already applied in this browser.");return;
-}
+// Do not trust the browser's applied-ID list as the wallet authority.
+ // The server wallet total below lets us safely reconcile retries.
 setCfcPackStatus("Verifying purchase with Vatar…");
 const sessionResult=await window.Vatar.session();
 const session=sessionResult&&sessionResult.session;
@@ -287,20 +286,40 @@ setCfcPackStatus(result.error||"Purchase verification failed. Retry later.",true
 if(!game){
 setCfcPackStatus("Purchase verified on the server, but no compound is loaded. Reopen your saved game and retry; do not buy again.",true);return;
 }
-// Recheck after the network wait to avoid duplicate callbacks in this page.
+// Reconcile against the server's cumulative purchased-CFC total.
+ // The game wallet also contains earned CFC, so only apply the new purchased delta.
 const ids=getAppliedPurchaseIds();
-if(ids.includes(purchaseId)){
-setCfcPackStatus("This purchase was already applied in this browser.");return;
+const serverPurchasedCfc=Number(result.purchasedCfc);
+if(!Number.isSafeInteger(serverPurchasedCfc)||serverPurchasedCfc<0){
+setCfcPackStatus("Server returned an invalid purchased-CFC balance. Retry safely.",true);return;
 }
-// This client-side application is for sandbox testing only. The server-side
-// grant ledger is the authoritative purchase record; localStorage is editable.
+// Migration for existing saves: the old client recorded applied purchase IDs
+// separately before this synced-total field existed.
+let synced=Number(game.purchasedCfcSynced);
+if(!Number.isSafeInteger(synced)||synced<0){
+synced=Math.min(serverPurchasedCfc,ids.length*CFC_PACK_REWARD);
+}
+const newPurchasedCfc=Math.max(synced,serverPurchasedCfc);
+const delta=Math.max(0,serverPurchasedCfc-synced);
+game.purchasedCfcSynced=newPurchasedCfc;
+if(!ids.includes(purchaseId)){
 ids.push(purchaseId);
-localStorage.setItem(APPLIED_PURCHASES_KEY,JSON.stringify(ids));
-game.cfc+=CFC_PACK_REWARD;
-journal("Vatar test purchase: +1,000 CFC Starter Pack.");
-save();render();
-setCfcPackStatus("Test purchase verified. 1,000 CFC added to this browser's game wallet.");
-toast("CFC Starter Pack processed!");
+try{localStorage.setItem(APPLIED_PURCHASES_KEY,JSON.stringify(ids));}catch{}
+}
+if(delta>0){
+game.cfc+=delta;
+journal("Vatar test purchase sync: +"+delta.toLocaleString()+" CFC.");
+}
+if(!save()){
+setCfcPackStatus("Purchase is verified, but this browser could not save the updated game. Do not buy again; reopen and retry.",true);return;
+}
+render();
+if(delta>0){
+setCfcPackStatus("Purchase verified. "+delta.toLocaleString()+" purchased CFC synced to this game's wallet.");
+toast("CFC purchase synced!");
+}else{
+setCfcPackStatus("Purchase verified. Your game wallet is already synced; no duplicate CFC added.");
+}
 }catch(error){
 console.error("CFC test purchase claim failed.",error);
 setCfcPackStatus("Claim could not finish. Reopen the game and retry the pending purchase.",true);
