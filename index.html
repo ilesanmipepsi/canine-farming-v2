@@ -7,54 +7,56 @@
 <title>Canine Farming</title>
 <script src="https://lagoslife.app/sdk/vatar-games-v1.js"></script>
 <style>
-:root{color-scheme:dark;--bg:#071711;--panel:#102b20;--border:#2a5b42;--gold:#f4c95d;--green:#65d49a;--muted:#a7c3b2}
+:root{color-scheme:dark;--bg:#100916;--panel:#24132e;--panel-strong:#30183c;--border:#654078;--gold:#f5cb69;--green:#d5a2d0;--muted:#d0bfd5;--cream:#fff3e8;--plum:#6e3a86;--ink:#21132a}
 *{box-sizing:border-box}
-body{margin:0;padding:14px;background:radial-gradient(ellipse at top,#173d2b,var(--bg) 65%);color:#f4f7f4;font-family:system-ui,sans-serif;line-height:1.5}
+body{margin:0;padding:14px;background:radial-gradient(ellipse at top,#54266a 0%,#21102d 42%,var(--bg) 78%);color:var(--cream);font-family:system-ui,sans-serif;line-height:1.5}
 .container{max-width:600px;margin:auto}
-header{text-align:center;padding:22px 12px;border:1px solid var(--border);border-radius:20px;background:#102b20;margin-bottom:14px}
-h1{color:var(--gold);font-size:1.7rem;margin:4px}
+header{text-align:center;padding:25px 14px;border:1px solid #875a9b;border-radius:24px;background:linear-gradient(145deg,#381b49,#21112e 72%);box-shadow:0 14px 35px #05020888,inset 0 1px #ffffff18;margin-bottom:14px;position:relative;overflow:hidden}
+header:after{content:"";display:block;height:3px;width:76px;margin:16px auto 0;border-radius:9px;background:linear-gradient(90deg,var(--plum),var(--gold),var(--plum))}
+h1{color:var(--gold);font-size:clamp(1.55rem,7vw,2rem);letter-spacing:.035em;margin:6px}
 h2{font-size:1.12rem;margin:0 0 12px}
 h3{font-size:1rem;margin:0 0 6px}
 p{margin-top:5px}
-.eyebrow{color:var(--green);font-size:.72rem;letter-spacing:1.3px;font-weight:800;text-transform:uppercase}
-.card{background:var(--panel);border:1px solid var(--border);border-radius:17px;padding:17px;margin-bottom:13px}
+.eyebrow{color:#e4b5e0;font-size:.72rem;letter-spacing:1.5px;font-weight:850;text-transform:uppercase}
+.card{background:linear-gradient(145deg,#2b1837,#21132b);border:1px solid var(--border);border-radius:19px;padding:17px;margin-bottom:13px;box-shadow:0 8px 22px #05020835}
 .muted{color:var(--muted);font-size:.86rem}
 .gold{color:var(--gold)}
 .hidden{display:none!important}
-label{display:block;margin:12px 0 5px}
-input,select{width:100%;min-height:46px;padding:10px;border-radius:10px;background:#091c13;border:1px solid #3c6a51;color:white;font:inherit}
-.btn{width:100%;min-height:45px;border:0;border-radius:11px;padding:10px;margin-top:10px;font:inherit;font-weight:750;cursor:pointer}
-.primary{background:linear-gradient(100deg,#f4d36c,#dcae31);color:#102016}
-.secondary{background:#28583f;color:white;border:1px solid #427756}
-.quiet{background:transparent;color:var(--muted);border:1px solid #355c46}
-.btn:disabled{opacity:.45;cursor:not-allowed}
-.status{padding:10px 12px;border-radius:10px;background:#0a2016;color:var(--muted);font-size:.87rem}
+label{display:block;margin:12px 0 5px;color:#f0e3f1}
+input,select{width:100%;min-height:46px;padding:10px;border-radius:12px;background:#160d1e;border:1px solid #75518a;color:var(--cream);font:inherit}
+.btn{width:100%;min-height:45px;border:0;border-radius:12px;padding:10px;margin-top:10px;font:inherit;font-weight:750;cursor:pointer;transition:filter .15s,transform .15s}
+.btn:active{transform:scale(.99)}
+.primary{background:linear-gradient(110deg,#ffe4a0,#e8b94f);color:var(--ink);box-shadow:0 4px 12px #08030a55}
+.secondary{background:linear-gradient(120deg,#75448c,#513063);color:#fff8ff;border:1px solid #a77ab9}
+.quiet{background:#1c1025;color:#e0cce5;border:1px solid #6a4a7a}
+.btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+.status{padding:11px 13px;border-radius:12px;background:#190f21;border:1px solid #3e294b;color:var(--muted);font-size:.87rem}
 .wallet{display:flex;justify-content:space-between;align-items:center;gap:12px}
-.wallet-label{color:var(--muted);font-size:.8rem}
-.balance{font-size:1.5rem;color:var(--gold);font-weight:850;overflow-wrap:anywhere}
-.pill{display:inline-block;border:1px solid #3d7655;border-radius:99px;padding:4px 9px;font-size:.75rem;color:#c8efd7;margin-top:4px}
+.wallet-label{color:#c7b3ce;font-size:.8rem;letter-spacing:.035em}
+.balance{font-size:1.5rem;color:var(--gold);font-weight:900;overflow-wrap:anywhere}
+.pill{display:inline-block;border:1px solid #a777ba;border-radius:99px;padding:4px 10px;font-size:.75rem;color:#f1d8f0;margin-top:4px;background:#4a2858}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.stat{background:#0a2116;border-radius:11px;padding:10px;min-width:0}
+.stat{background:#190f22;border:1px solid #3c2847;border-radius:13px;padding:10px;min-width:0}
 .stat-top{display:flex;justify-content:space-between;gap:4px;font-size:.8rem;margin-bottom:6px}
-.track{height:8px;background:#294637;border-radius:20px;overflow:hidden}
-.fill{height:100%;background:var(--green);border-radius:20px;width:50%}
+.track{height:8px;background:#44334c;border-radius:20px;overflow:hidden}
+.fill{height:100%;background:linear-gradient(90deg,#b87bc6,#f0c0e5);border-radius:20px;width:50%}
 .fill.low{background:#f0bd4d}
 .fill.critical{background:#ef7676}
 .action-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
 .action-grid .btn{margin:0;padding:9px 4px}
 .small{display:block;font-size:.76rem;font-weight:500}
-.dog-card{border:1px solid #315c40;background:#0b2117;border-radius:14px;padding:14px;margin-top:12px}
+.dog-card{border:1px solid #68447a;background:linear-gradient(145deg,#21132b,#180d20);border-radius:17px;padding:14px;margin-top:12px;box-shadow:inset 0 1px #ffffff0b}
 .dog-heading{display:flex;gap:10px;align-items:center;margin-bottom:12px}
-.dog-icon{font-size:2.3rem}
-.dog-name{font-size:1.1rem;font-weight:850;color:var(--gold);overflow-wrap:anywhere}
+.dog-icon{font-size:2.3rem;filter:drop-shadow(0 3px 6px #0008)}
+.dog-name{font-size:1.1rem;font-weight:900;color:var(--gold);overflow-wrap:anywhere}
 .dog-card .stats{margin-top:12px}
-.job{background:#0a2116;border:1px solid #294a36;border-radius:12px;padding:12px;margin-top:10px}
+.job{background:linear-gradient(140deg,#20122b,#190e21);border:1px solid #4d335b;border-radius:15px;padding:13px;margin-top:10px}
 .job-head{display:flex;justify-content:space-between;gap:8px}
-.job-reward{color:var(--gold);font-weight:800;white-space:nowrap}
-.log-item{padding:9px 0;border-bottom:1px solid #284735;font-size:.85rem}
+.job-reward{color:var(--gold);font-weight:850;white-space:nowrap}
+.log-item{padding:9px 0;border-bottom:1px solid #3d2947;font-size:.85rem}
 .log-item:last-child{border:0}
-.divider{height:1px;background:#294a36;margin:14px 0}
-footer{text-align:center;color:#86a795;font-size:.76rem;padding:12px}
+.divider{height:1px;background:linear-gradient(90deg,transparent,#745181,transparent);margin:15px 0}
+footer{text-align:center;color:#b7a1c0;font-size:.76rem;padding:12px}
 @media(max-width:360px){body{padding:8px}.card{padding:12px}.balance{font-size:1.25rem}.stats{gap:6px}}
 </style>
 </head>
@@ -100,7 +102,7 @@ footer{text-align:center;color:#86a795;font-size:.76rem;padding:12px}
 <div class="wallet"><div><div class="wallet-label">KENNEL CAPACITY</div><b id="kennelCapacity">1 dog</b></div><div style="text-align:right"><div class="wallet-label">DOGS OWNED</div><b id="dogCount">0</b></div></div>
 </section>
 
-<section class="card" id="cfcPackCard">
+<section class="card hidden" id="cfcPackCard">
 <div class="eyebrow">Vatar test purchase</div>
 <h2>🪙 CFC Starter Pack</h2>
 <p class="muted">Test offer: use Vatar's purchase screen to pay ₦100 and receive 1,000 CFC.</p>
@@ -228,9 +230,11 @@ vatarMode=result.mode||null;
 vatarStatus="initialized";
 console.info("Vatar SDK initialized.",{playerAvailable:!!vatarPlayer,mode:vatarMode});
 if(vatarMode==="test"){
+$("cfcPackCard").classList.remove("hidden");
 setCfcPackStatus("Vatar test session ready. You can use the test offer.");
 $("buyCfcPackBtn").disabled=false;
 }else{
+$("cfcPackCard").classList.add("hidden");
 setCfcPackStatus("CFC Starter Pack is available in Vatar test mode only.",true);
 $("buyCfcPackBtn").disabled=true;
 }
