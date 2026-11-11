@@ -4,7 +4,7 @@ const {
   fetchPurchase,
   validatePurchase,
   grantAndDeliver
-} = require("./_lib/vatar");
+} = require("../lib/vatar");
 
 function send(res, status, payload) {
   return res.status(status).json(payload);
