@@ -16,17 +16,21 @@ function readRawBody(req, maxBytes = 262144) {
   return new Promise((resolve, reject) => {
     const chunks = [];
     let size = 0;
+    let tooLarge = false;
 
     req.on("data", chunk => {
       size += chunk.length;
       if (size > maxBytes) {
-        reject(new Error("Webhook body too large."));
-        req.destroy();
+        tooLarge = true;
+        chunks.length = 0;
         return;
       }
-      chunks.push(chunk);
+      if (!tooLarge) chunks.push(chunk);
     });
-    req.on("end", () => resolve(Buffer.concat(chunks)));
+    req.on("end", () => {
+      if (tooLarge) return reject(new Error("Webhook body too large."));
+      resolve(Buffer.concat(chunks));
+    });
     req.on("error", reject);
   });
 }
