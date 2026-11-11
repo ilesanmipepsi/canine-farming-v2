@@ -366,7 +366,7 @@ if(!applied){
 setCfcPackStatus("Purchase is verified, but the local wallet could not be saved. Do not buy again; reopen the game to sync again.",true);return;
 }
 if(applied.delta>0){
-setCfcPackStatus("Purchase verified. "+delta.toLocaleString()+" purchased CFC synced to this game's wallet.");
+setCfcPackStatus("Purchase verified. "+applied.delta.toLocaleString()+" purchased CFC synced to this game's wallet.");
 toast("CFC purchase synced!");
 }else{
 setCfcPackStatus("Purchase verified. Your game wallet is already synced; no duplicate CFC added.");
