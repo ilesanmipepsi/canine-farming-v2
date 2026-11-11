@@ -325,7 +325,7 @@ try{localStorage.setItem(APPLIED_PURCHASES_KEY,JSON.stringify(ids));}catch{}
 }
 if(delta>0){
 game.cfc+=delta;
-journal("Vatar test purchase sync: +"+delta.toLocaleString()+" CFC.");
+journal("Vatar purchase sync: +"+delta.toLocaleString()+" CFC.");
 }
 if(!save()){
 setCfcPackStatus("Purchase is verified, but this browser could not save the updated game. Do not buy again; reopen and retry.",true);return;
@@ -338,7 +338,7 @@ toast("CFC purchase synced!");
 setCfcPackStatus("Purchase verified. Your game wallet is already synced; no duplicate CFC added.");
 }
 }catch(error){
-console.error("CFC test purchase claim failed.",error);
+console.error("CFC purchase claim failed.",error);
 setCfcPackStatus("Claim could not finish. Reopen the game and retry the pending purchase.",true);
 }finally{claimsInProgress.delete(purchaseId);}
 }
@@ -351,7 +351,7 @@ setCfcPackStatus("A verified Vatar session is required for this offer.",true);re
 }
 try{
 $("buyCfcPackBtn").disabled=true;
-setCfcPackStatus("Opening Vatar's test purchase screen…");
+setCfcPackStatus("Opening Vatar's secure purchase screen…");
 const purchase=await window.Vatar.purchase(CFC_PACK_PRODUCT);
 if(purchase&&typeof purchase.purchaseId==="string"){
 await claimCfcPurchase(purchase);
