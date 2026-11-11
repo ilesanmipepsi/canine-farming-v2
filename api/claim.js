@@ -1,5 +1,4 @@
 const {
-  apiCredential,
   configuredModes,
   verifySession,
   fetchPurchase,
