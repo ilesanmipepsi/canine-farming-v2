@@ -242,19 +242,11 @@ setCfcPackStatus(vatarMode==="test"
 ?"Vatar test session ready. You can use the sandbox offer."
 :"Vatar live session ready. Purchases use Vatar's live payment screen.");
 
- // Restore interrupted purchases only after initialization.
-try{
-if(typeof window.Vatar.purchases==="function"){
-const pending=await window.Vatar.purchases();
-if(Array.isArray(pending)){
-for(const purchase of pending){
-await claimCfcPurchase(purchase);
-}
-}
-}
-}catch(error){
-console.warn("Could not restore pending Vatar purchases.",error);
-setCfcPackStatus("Could not restore pending purchases yet. Reopen the game or retry.",true);
+// Do not claim a purchase until a local compound exists to receive the wallet sync.
+if(game){
+await restorePendingVatarPurchases();
+}else{
+setCfcPackStatus("Create your breeder profile first. Any pending purchase will be restored afterward.");
 }
 }
 
@@ -263,6 +255,21 @@ const el=document.getElementById("cfcPackStatus");
 if(!el)return;
 el.textContent=message;
 el.style.color=error?"#ff8585":"#c8efd7";
+}
+async function restorePendingVatarPurchases(){
+if(!game||vatarStatus!=="initialized"||!window.Vatar||
+typeof window.Vatar.purchases!=="function")return;
+try{
+const pending=await window.Vatar.purchases();
+if(Array.isArray(pending)){
+for(const purchase of pending){
+await claimCfcPurchase(purchase);
+}
+}
+}catch(error){
+console.warn("Could not restore pending Vatar purchases.",error);
+setCfcPackStatus("Could not restore pending purchases yet. Reopen the game or retry.",true);
+}
 }
 function getAppliedPurchaseIds(){
 try{
@@ -274,6 +281,10 @@ async function claimCfcPurchase(purchase){
 const purchaseId=purchase&&typeof purchase.purchaseId==="string"?purchase.purchaseId:"";
 if(!/^[a-zA-Z0-9_-]{8,128}$/.test(purchaseId)){
 setCfcPackStatus("Vatar did not provide a valid purchase ID.",true);return;
+}
+if(!game){
+setCfcPackStatus("Create or restore your breeder profile before claiming CFC. The pending purchase will remain available.",true);
+return;
 }
 if(claimsInProgress.has(purchaseId))return;
 claimsInProgress.add(purchaseId);
@@ -299,9 +310,6 @@ body:JSON.stringify({session,purchaseId})
 let result={};try{result=await response.json();}catch{}
 if(!response.ok||result.ok!==true){
 setCfcPackStatus(result.error||"Purchase verification failed. Retry later.",true);return;
-}
-if(!game){
-setCfcPackStatus("Purchase verified on the server, but no compound is loaded. Reopen your saved game and retry; do not buy again.",true);return;
 }
 // Reconcile against the server's cumulative purchased-CFC total.
  // The game wallet also contains earned CFC, so only apply the new purchased delta.
@@ -526,7 +534,7 @@ game={version:1,breederName:name,homeState:state,cfc:700,dog:null,dogs:[],kennel
 journal("Welcome, "+name+"! Your compound is in "+state+".");
 journal("Your starting wallet contains 700 CFC.");
 journal("Choose from eight starter breeds. Your first dog costs 500 CFC.");
-save();screen();$("notice").textContent="Your compound is ready.";toast("Welcome, breeder!");
+save();screen();restorePendingVatarPurchases();$("notice").textContent="Your compound is ready.";toast("Welcome, breeder!");
 }
 
 function screen(){
