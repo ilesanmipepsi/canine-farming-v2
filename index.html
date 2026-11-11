@@ -244,7 +244,7 @@ setCfcPackStatus(vatarMode==="test"
 
 // Do not claim a purchase until a local compound exists to receive the wallet sync.
 if(game){
-await restorePendingVatarPurchases();
+await prepareVatarPurchases();
 }else{
 setCfcPackStatus("Create your breeder profile first. Any pending purchase will be restored afterward.");
 }
@@ -276,6 +276,56 @@ try{
 const ids=JSON.parse(localStorage.getItem(APPLIED_PURCHASES_KEY)||"[]");
 return Array.isArray(ids)?ids:[];
 }catch{return [];}
+}
+function applyPurchasedCfcTotal(serverPurchasedCfc,purchaseId){
+if(!game)return null;
+const total=Number(serverPurchasedCfc);
+if(!Number.isSafeInteger(total)||total<0)return null;
+const ids=getAppliedPurchaseIds();
+let synced=Number(game.purchasedCfcSynced);
+if(!Number.isSafeInteger(synced)||synced<0){
+synced=Math.min(total,ids.length*CFC_PACK_REWARD);
+}
+const delta=Math.max(0,total-synced);
+game.purchasedCfcSynced=Math.max(synced,total);
+if(purchaseId&&!ids.includes(purchaseId)){
+ids.push(purchaseId);
+try{localStorage.setItem(APPLIED_PURCHASES_KEY,JSON.stringify(ids));}catch{}
+}
+if(delta>0){
+game.cfc+=delta;
+journal("Vatar purchase sync: +"+delta.toLocaleString()+" CFC.");
+}
+if(!save())return null;
+render();
+return {delta};
+}
+
+async function syncPurchasedWalletFromServer(){
+if(!game||vatarStatus!=="initialized"||!window.Vatar||
+typeof window.Vatar.session!=="function")return false;
+try{
+const sessionResult=await window.Vatar.session();
+const session=sessionResult&&sessionResult.session;
+if(typeof session!=="string"||!session)return false;
+const response=await fetch("/api/wallet",{
+method:"POST",headers:{"Content-Type":"application/json"},
+body:JSON.stringify({session})
+});
+let result={};try{result=await response.json();}catch{}
+if(!response.ok||result.ok!==true)return false;
+const applied=applyPurchasedCfcTotal(result.purchasedCfc,null);
+return !!applied;
+}catch(error){
+console.warn("Purchased-CFC wallet sync failed.",error);
+return false;
+}
+}
+
+async function prepareVatarPurchases(){
+if(!game||vatarStatus!=="initialized")return;
+await syncPurchasedWalletFromServer();
+await restorePendingVatarPurchases();
 }
 async function claimCfcPurchase(purchase){
 const purchaseId=purchase&&typeof purchase.purchaseId==="string"?purchase.purchaseId:"";
@@ -311,35 +361,11 @@ let result={};try{result=await response.json();}catch{}
 if(!response.ok||result.ok!==true){
 setCfcPackStatus(result.error||"Purchase verification failed. Retry later.",true);return;
 }
-// Reconcile against the server's cumulative purchased-CFC total.
- // The game wallet also contains earned CFC, so only apply the new purchased delta.
-const ids=getAppliedPurchaseIds();
-const serverPurchasedCfc=Number(result.purchasedCfc);
-if(!Number.isSafeInteger(serverPurchasedCfc)||serverPurchasedCfc<0){
-setCfcPackStatus("Server returned an invalid purchased-CFC balance. Retry safely.",true);return;
+const applied=applyPurchasedCfcTotal(result.purchasedCfc,purchaseId);
+if(!applied){
+setCfcPackStatus("Purchase is verified, but the local wallet could not be saved. Do not buy again; reopen the game to sync again.",true);return;
 }
-// Migration for existing saves: the old client recorded applied purchase IDs
-// separately before this synced-total field existed.
-let synced=Number(game.purchasedCfcSynced);
-if(!Number.isSafeInteger(synced)||synced<0){
-synced=Math.min(serverPurchasedCfc,ids.length*CFC_PACK_REWARD);
-}
-const newPurchasedCfc=Math.max(synced,serverPurchasedCfc);
-const delta=Math.max(0,serverPurchasedCfc-synced);
-game.purchasedCfcSynced=newPurchasedCfc;
-if(!ids.includes(purchaseId)){
-ids.push(purchaseId);
-try{localStorage.setItem(APPLIED_PURCHASES_KEY,JSON.stringify(ids));}catch{}
-}
-if(delta>0){
-game.cfc+=delta;
-journal("Vatar purchase sync: +"+delta.toLocaleString()+" CFC.");
-}
-if(!save()){
-setCfcPackStatus("Purchase is verified, but this browser could not save the updated game. Do not buy again; reopen and retry.",true);return;
-}
-render();
-if(delta>0){
+if(applied.delta>0){
 setCfcPackStatus("Purchase verified. "+delta.toLocaleString()+" purchased CFC synced to this game's wallet.");
 toast("CFC purchase synced!");
 }else{
@@ -534,7 +560,7 @@ game={version:1,breederName:name,homeState:state,cfc:700,dog:null,dogs:[],kennel
 journal("Welcome, "+name+"! Your compound is in "+state+".");
 journal("Your starting wallet contains 700 CFC.");
 journal("Choose from eight starter breeds. Your first dog costs 500 CFC.");
-save();screen();restorePendingVatarPurchases();$("notice").textContent="Your compound is ready.";toast("Welcome, breeder!");
+save();screen();prepareVatarPurchases();$("notice").textContent="Your compound is ready.";toast("Welcome, breeder!");
 }
 
 function screen(){
